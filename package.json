@@ -1,0 +1,22 @@
+{
+  "name": "cultral_house_backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ghassan1199/Cultral_House_Backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ghassan1199/Cultral_House_Backend/issues"
+  },
+  "homepage": "https://github.com/Ghassan1199/Cultral_House_Backend#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
