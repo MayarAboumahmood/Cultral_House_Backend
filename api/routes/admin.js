@@ -1,10 +1,17 @@
-const express = require("express");
-const router = express.Router();
-const {createAdmin} = require("../controllers/AdminController.js");
+//importing modules
+const express = require('express')
+const adminController = require('../controllers/AdminController')
+const {signup, login,} = adminController
+const checkAuth = require('../middleware/check-auth')
+
+const router = express.Router()
+
+//signup endpoint
+//passing the middleware function to the signup
+router.post('/signup', checkAuth.saveAdmin, signup)
+
+//login route
+router.post('/login', login)
 
 
-router.route('/create').post(createAdmin);
-
-
-
-module.exports = router;
+module.exports = router

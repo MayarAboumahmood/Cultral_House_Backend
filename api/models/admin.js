@@ -1,25 +1,28 @@
-const database = require('../db/connection');
+module.exports = (sequelize, DataTypes) => {
+    return sequelize.define("admin", {
+        admin_id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
 
-class Admin {
-
-    constructor(admin_name, password, is_super) {
-
-        this.admin_name = admin_name;
-        this.password = password;
-        this.is_super = is_super;
-
+        },
+        admin_name: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        email: {
+            type: DataTypes.STRING,
+            unique: true,
+            isEmail: true,
+            allowNull: false
+        },
+        password: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        is_super: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false
+        }
+    }, {timestamps: true},)
 }
-
- static create(admin) {
-    const query = {
-      text: 'INSERT INTO admins (admin_name, password, is_super) VALUES ($1, $2, $3) RETURNING *',
-      values: [admin.admin_name, admin.password, admin.is_super]
-    };
-
-    return database.pool.query(query);
-  }
-
-
-}
-
-module.exports = Admin;

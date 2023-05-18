@@ -1,19 +1,95 @@
-const Admin = require('../models/admin');
+//importing modules
+const bcrypt = require("bcrypt");
+const db = require("../Models");
+const jwt = require("jsonwebtoken");
 
-async function createAdmin(req, res)
-{
+// Assigning users to the variable User
+const Admin = db.admins;
 
-    const admin_name = req.body.admin_name;
-    const password = req.body.password;
-    const is_super = req.body.is_super;
+//signing a user up
+//hashing users password before its saved to the database with bcrypt
+const signup = async (req, res) => {
+    try {
+        const {admin_name, email, password, is_super} = req.body;
+        const data = {
+            admin_name,
+            email,
+            password: await bcrypt.hash(password, 10),
+            is_super
+        };
+        //saving the user
+        const admin = await Admin.create(data);
 
 
-    const admin =  new Admin(admin_name, password, is_super);
+        if (admin) {
+            let token = jwt.sign({admin:admin}, process.env.SECRET, {
+                expiresIn: 1 * 24 * 60 * 60 * 1000,
+            });
 
-    const resoult = await Admin.create(admin);
+            res.cookie("jwt", token, {maxAge: 1 * 24 * 60 * 60, httpOnly: true});
+            console.log("admin", JSON.stringify(admin, null, 2));
+            console.log(token);
+            //send users details
+            return res.status(201).json({
+                admin:admin,
+                token:token
+            });
+        } else {
+            return res.status(409).send("Details are not correct");
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
 
-    res.status(200).json(resoult);
 
-}
+//login authentication
 
-module.exports = {createAdmin};
+const login = async (req, res) => {
+    try {
+        const {email, password} = req.body;
+
+        //find a admin by their email
+        const admin = await Admin.findOne({
+            where: {
+                email: email
+            }
+
+        });
+
+        //if admin email is found, compare password with bcrypt
+        if (admin) {
+            const isSame = await bcrypt.compare(password, admin.password);
+
+            //if password is the same
+            //generate token with the admin's id and the secretKey in the env file
+
+            if (isSame) {
+                let token = jwt.sign({admin:admin}, process.env.SECRET, {
+                    expiresIn: 24 * 60 * 60 * 1000,
+                });
+
+                //if password matches wit the one in the database
+                //go ahead and generate a cookie for the admin
+                console.log("admin", JSON.stringify(admin, null, 2));
+                console.log(token);
+                //send admin data
+                return res.status(201).json({
+                    admin:admin,
+                    token:token
+                });
+            } else {
+                return res.status(401).send("Authentication failed");
+            }
+        } else {
+            return res.status(401).send("Authentication failed");
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+module.exports = {
+    signup,
+    login,
+};
