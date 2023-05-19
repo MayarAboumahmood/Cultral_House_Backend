@@ -34,5 +34,6 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: false
 
         }
-    }, {timestamps: true},)
+    },
+     {timestamps: true},)
 }

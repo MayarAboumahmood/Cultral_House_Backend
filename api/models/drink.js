@@ -1,36 +1,35 @@
 module.exports = (sequelize, DataTypes) => {
-    return sequelize.define("worker", {
-        worker_id: {
+    return sequelize.define("drink", {
+        drink_id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true,
 
         },
-        first_name: {
+        title: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        last_name: {
-            type: DataTypes.STRING,
+        description: {
+            type: DataTypes.TEXT,
             allowNull: false
         },
-        phone_number: {
-            type: DataTypes.STRING,
-            unique: true,
+        price: {
+            type: DataTypes.FLOAT,
             allowNull: false
         },
-        email: {
-            type: DataTypes.STRING,
-            unique: true,
-            isEmail: true,
+        quantity: {
+            type: DataTypes.INTEGER,
             allowNull: false
         },
-        password: {
-            type: DataTypes.STRING,
+        cost: {
+            type: DataTypes.FLOAT,
             allowNull: false
         },
     },
      {timestamps: true},)
 }
+
+
 
 
