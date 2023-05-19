@@ -1,8 +1,6 @@
 //importing modules
-const express = require("express");
 const db = require("../Models");
 const jwt = require('jsonwebtoken')
-const env = require('dotenv');
 //Assigning db.admins to Admin variable
 const Admin = db.admins;
 
@@ -11,7 +9,12 @@ const Admin = db.admins;
 const saveAdmin = async (req, res, next) => {
     //search the database to see if admin exist
     try {
-    
+        if (!req.body.email || !req.body.password || !req.body.admin_name) {
+            return res.status(400).json({
+                msg: "validation error"
+            })
+        }
+
         //checking if email already exist
         const emailCheck = await Admin.findOne({
             where: {
@@ -21,7 +24,9 @@ const saveAdmin = async (req, res, next) => {
 
         //if email exist in the database respond with a status of 409
         if (emailCheck) {
-            return res.json(409).send("Authentication failed");
+            return res.status(409).json({
+                msg: "Email does exist in the data base"
+            });
         }
 
         next();
@@ -37,21 +42,21 @@ const checkIfSuper = async (req, res, next) => {
             msg: "No token provided!"
         })
     } else {
-        jwt.verify(token, process.env.SECRET, (err, decoded) => {
+        jwt.verify(token, process.env.SECRET, null, (err, decoded) => {
             if (err) {
                 res.status(401).json({
                     msg: "Unauthorized!"
                 })
             } else {
-                if(decoded.admin.is_super===0){
+                if (decoded.admin.is_super === 0) {
                     res.status(401).json({
-                        msg:'you are not the super admin'
+                        msg: 'you are not the super admin'
                     })
-                }else{
+                } else {
                     next()
                 }
             }
-        })
+        });
 
     }
 

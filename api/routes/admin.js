@@ -1,17 +1,16 @@
 //importing modules
 const express = require('express')
 const adminController = require('../controllers/AdminController')
-const {signup, login,} = adminController
 const checkAuth = require('../middleware/checkAuth')
 
 const router = express.Router()
 
-//signup endpoint
-//passing the middleware function to the signup
-router.post('/signup', checkAuth.saveAdmin, signup)
+router.post('/signup', checkAuth.checkIfSuper, checkAuth.saveAdmin, adminController.createAdmin)
 
-//login route
-router.post('/login', login)
+router.post('/login', adminController.login)
 
+router.delete('/delete', checkAuth.checkIfSuper, adminController.deleteAdmin)
+
+router.get('/showall',checkAuth.checkIfSuper,adminController.showAllAdmins)
 
 module.exports = router

@@ -3,12 +3,9 @@ const bcrypt = require("bcrypt");
 const db = require("../Models/index");
 const jwt = require("jsonwebtoken");
 
-// Assigning users to the variable User
 const Admin = db.admins;
 
-//signing a user up
-//hashing users password before its saved to the database with bcrypt
-const signup = async (req, res) => {
+const createAdmin = async (req, res) => {
     try {
         const {admin_name, email, password, is_super} = req.body;
         const data = {
@@ -20,36 +17,24 @@ const signup = async (req, res) => {
         //saving the user
         const admin = await Admin.create(data);
 
+        return res.status(201).json({
+            msg: "admin created successfully",
+            data: admin
+        });
 
-        if (admin) {
-            let token = jwt.sign({admin:admin}, process.env.SECRET, {
-                expiresIn: 1 * 24 * 60 * 60 * 1000,
-            });
-
-            res.cookie("jwt", token, {maxAge: 1 * 24 * 60 * 60, httpOnly: true});
-         //   console.log("admin", JSON.stringify(admin, null, 2));
-           // console.log(token);
-            //send users details
-            return res.status(201).json({
-                admin:admin,
-                token:token
-            });
-        } else {
-            return res.status(409).send("Details are not correct");
-        }
     } catch (error) {
         console.log(error);
     }
 };
 
-
-//login authentication
-
 const login = async (req, res) => {
     try {
         const {email, password} = req.body;
+        if (!email || !password) {
+            res.status(400).json({msg: "validation error"})
+        }
 
-        //find a admin by their email
+        //find an admin by their email
         const admin = await Admin.findOne({
             where: {
                 email: email
@@ -65,31 +50,68 @@ const login = async (req, res) => {
             //generate token with the admin's id and the secretKey in the env file
 
             if (isSame) {
-                let token = jwt.sign({admin:admin}, process.env.SECRET, {
+                let token = jwt.sign({admin: admin}, process.env.SECRET, null, {
                     expiresIn: 24 * 60 * 60 * 1000,
                 });
 
                 //if password matches wit the one in the database
-                //go ahead and generate a cookie for the admin
-             //   console.log("admin", JSON.stringify(admin, null, 2));
-               // console.log(token);
                 //send admin data
-                return res.status(201).json({
-                    admin:admin,
-                    token:token
+                return res.status(200).json({
+                    msg: "Logged in Successfully",
+                    data: admin,
+                    token: token
                 });
             } else {
-                return res.status(401).send("Authentication failed");
+                return res.status(401).json({msg: "Authentication failed"});
             }
         } else {
-            return res.status(401).send("Authentication failed");
+            return res.status(401).json({msg: "Authentication failed"});
         }
     } catch (error) {
         console.log(error);
     }
 };
 
+const deleteAdmin = async (req, res) => {
+    const admin_id = req.body.admin_id;
+
+    if (!admin_id) {
+        res.status(400).json({
+            msg: "no admin_id is given"
+        })
+    }
+    const admin = await Admin.findOne({
+        where: {
+            admin_id: admin_id
+        }
+    })
+    if (admin) {
+
+        admin.destroy()
+
+        return res.status(202).json({
+            msg: "admin has been deleted successfully",
+            data: admin
+        })
+    } else {
+        res.status(404).json({
+            msg: "Admin not found"
+        })
+    }
+
+}
+
+const showAllAdmins = async (req, res) => {
+    const admins = await Admin.findAll()
+    res.status(200).json({
+        msg: "admin has been sent successfully",
+        data: admins
+    })
+}
+
 module.exports = {
-    signup,
+    createAdmin,
     login,
+    deleteAdmin,
+    showAllAdmins
 };
