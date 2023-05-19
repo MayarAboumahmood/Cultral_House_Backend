@@ -25,7 +25,7 @@ app.use('/admins', admins);
 app.use(express.json())
 
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync({force:true}).then(() => {
     console.log("db has been re sync")
 })
 

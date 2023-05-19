@@ -22,20 +22,21 @@ const signup = async (req, res) => {
 
 
         if (admin) {
-            let token = jwt.sign({admin:admin}, process.env.SECRET, {
+            let token = jwt.sign({admin: admin}, process.env.SECRET, {
                 expiresIn: 1 * 24 * 60 * 60 * 1000,
             });
 
-            res.cookie("jwt", token, {maxAge: 1 * 24 * 60 * 60, httpOnly: true});
             console.log("admin", JSON.stringify(admin, null, 2));
             console.log(token);
             //send users details
             return res.status(201).json({
-                admin:admin,
-                token:token
+                admin: admin,
+                token: token
             });
         } else {
-            return res.status(409).send("Details are not correct");
+            return res.status(409).json({
+                msg: "admin already existing"
+            });
         }
     } catch (error) {
         console.log(error);
@@ -65,7 +66,7 @@ const login = async (req, res) => {
             //generate token with the admin's id and the secretKey in the env file
 
             if (isSame) {
-                let token = jwt.sign({admin:admin}, process.env.SECRET, {
+                let token = jwt.sign({admin: admin}, process.env.SECRET, {
                     expiresIn: 24 * 60 * 60 * 1000,
                 });
 
@@ -75,8 +76,8 @@ const login = async (req, res) => {
                 console.log(token);
                 //send admin data
                 return res.status(201).json({
-                    admin:admin,
-                    token:token
+                    admin: admin,
+                    token: token
                 });
             } else {
                 return res.status(401).send("Authentication failed");
