@@ -32,7 +32,7 @@ const signup = async (req, res) => {
 
             //send users details
             return res.status(201).json({
-                admin: admin,
+                data: admin,
                 token: token
             });
         } else {
@@ -80,9 +80,9 @@ const login = async (req, res) => {
                 //   console.log("admin", JSON.stringify(admin, null, 2));
                 // console.log(token);
                 //send admin data
-                return res.status(201).json({
+                return res.status(200).json({
                     msg: "Login Success",
-                    admin: admin,
+                    data: admin,
                     token: token
                 });
             } else {
