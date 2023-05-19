@@ -11,7 +11,7 @@ const Admin = db.admins;
 const saveAdmin = async (req, res, next) => {
     //search the database to see if admin exist
     try {
-    
+
         //checking if email already exist
         const emailCheck = await Admin.findOne({
             where: {
@@ -21,7 +21,7 @@ const saveAdmin = async (req, res, next) => {
 
         //if email exist in the database respond with a status of 409
         if (emailCheck) {
-            return res.json(409).send("Authentication failed");
+            return res.status(409).json("409");
         }
 
         next();
@@ -43,11 +43,11 @@ const checkIfSuper = async (req, res, next) => {
                     msg: "Unauthorized!"
                 })
             } else {
-                if(decoded.admin.is_super===0){
+                if (decoded.admin.is_super === 0) {
                     res.status(401).json({
-                        msg:'you are not the super admin'
+                        msg: 'you are not the super admin'
                     })
-                }else{
+                } else {
                     next()
                 }
             }
