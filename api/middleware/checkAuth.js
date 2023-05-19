@@ -11,7 +11,11 @@ const Admin = db.admins;
 const saveAdmin = async (req, res, next) => {
     //search the database to see if admin exist
     try {
-
+        if (!req.body.email || !req.body.password || !req.body.admin_name) {
+            return res.status(400).json({
+                msg: "validation error"
+            })
+        }
         //checking if email already exist
         const emailCheck = await Admin.findOne({
             where: {
@@ -21,7 +25,9 @@ const saveAdmin = async (req, res, next) => {
 
         //if email exist in the database respond with a status of 409
         if (emailCheck) {
-            return res.status(409).json("409");
+            return res.status(409).json({
+                msg: "Email does exist in the data base"
+            });
         }
 
         next();

@@ -27,8 +27,8 @@ const signup = async (req, res) => {
             });
 
             res.cookie("jwt", token, {maxAge: 1 * 24 * 60 * 60, httpOnly: true});
-         //   console.log("admin", JSON.stringify(admin, null, 2));
-           // console.log(token);
+            //   console.log("admin", JSON.stringify(admin, null, 2));
+            // console.log(token);
 
             //send users details
             return res.status(201).json({
@@ -51,8 +51,11 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
     try {
         const {email, password} = req.body;
+        if (!email || !password) {
+            res.status(400).json({msg: "validation error"})
+        }
 
-        //find a admin by their email
+        //find an admin by their email
         const admin = await Admin.findOne({
             where: {
                 email: email
@@ -74,18 +77,19 @@ const login = async (req, res) => {
 
                 //if password matches wit the one in the database
                 //go ahead and generate a cookie for the admin
-             //   console.log("admin", JSON.stringify(admin, null, 2));
-               // console.log(token);
+                //   console.log("admin", JSON.stringify(admin, null, 2));
+                // console.log(token);
                 //send admin data
                 return res.status(201).json({
+                    msg: "Login Success",
                     admin: admin,
                     token: token
                 });
             } else {
-                return res.status(401).send("Authentication failed");
+                return res.status(401).json({msg: "Authentication failed"});
             }
         } else {
-            return res.status(401).send("Authentication failed");
+            return res.status(401).json({msg: "Authentication failed"});
         }
     } catch (error) {
         console.log(error);
