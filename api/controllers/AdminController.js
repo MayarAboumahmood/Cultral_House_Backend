@@ -79,7 +79,37 @@ const login = async (req, res) => {
     }
 };
 
+const deleteAdmin = async (req, res) => {
+    const admin_id = req.body.admin_id;
+
+    if (!admin_id) {
+        res.status(400).json({
+            msg: "no admin_id is given"
+        })
+    }
+    const admin = await Admin.findOne({
+        where: {
+            admin_id: admin_id
+        }
+    })
+    if(admin){
+
+        admin.destroy()
+
+        return res.status(202).json({
+            msg: "admin has been deleted successfully",
+            data: admin
+        })
+    }else{
+        res.status(404).json({
+            msg:"Admin not found"
+        })
+    }
+
+}
+
 module.exports = {
     createAdmin,
     login,
+    deleteAdmin
 };
