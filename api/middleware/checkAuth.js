@@ -1,8 +1,6 @@
 //importing modules
-const express = require("express");
 const db = require("../Models");
 const jwt = require('jsonwebtoken')
-const env = require('dotenv');
 //Assigning db.admins to Admin variable
 const Admin = db.admins;
 
@@ -16,6 +14,7 @@ const saveAdmin = async (req, res, next) => {
                 msg: "validation error"
             })
         }
+
         //checking if email already exist
         const emailCheck = await Admin.findOne({
             where: {
@@ -43,7 +42,7 @@ const checkIfSuper = async (req, res, next) => {
             msg: "No token provided!"
         })
     } else {
-        jwt.verify(token, process.env.SECRET, (err, decoded) => {
+        jwt.verify(token, process.env.SECRET, null, (err, decoded) => {
             if (err) {
                 res.status(401).json({
                     msg: "Unauthorized!"
@@ -57,7 +56,7 @@ const checkIfSuper = async (req, res, next) => {
                     next()
                 }
             }
-        })
+        });
 
     }
 
