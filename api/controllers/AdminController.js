@@ -3,11 +3,7 @@ const bcrypt = require("bcrypt");
 const db = require("../Models/index");
 const jwt = require("jsonwebtoken");
 
-// Assigning users to the variable User
 const Admin = db.admins;
-
-//signing a user up
-//hashing users password before its saved to the database with bcrypt
 
 const createAdmin = async (req, res) => {
     try {
@@ -30,9 +26,6 @@ const createAdmin = async (req, res) => {
         console.log(error);
     }
 };
-
-
-//login authentication
 
 const login = async (req, res) => {
     try {
@@ -92,7 +85,7 @@ const deleteAdmin = async (req, res) => {
             admin_id: admin_id
         }
     })
-    if(admin){
+    if (admin) {
 
         admin.destroy()
 
@@ -100,16 +93,25 @@ const deleteAdmin = async (req, res) => {
             msg: "admin has been deleted successfully",
             data: admin
         })
-    }else{
+    } else {
         res.status(404).json({
-            msg:"Admin not found"
+            msg: "Admin not found"
         })
     }
 
 }
 
+const showAllAdmins = async (req, res) => {
+    const admins = await Admin.findAll()
+    res.status(200).json({
+        msg: "admin has been sent successfully",
+        data: admins
+    })
+}
+
 module.exports = {
     createAdmin,
     login,
-    deleteAdmin
+    deleteAdmin,
+    showAllAdmins
 };
