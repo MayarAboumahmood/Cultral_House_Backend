@@ -1,6 +1,6 @@
 //importing modules
 const bcrypt = require("bcrypt");
-const db = require("../Models");
+const db = require("../Models/index");
 const jwt = require("jsonwebtoken");
 
 // Assigning users to the variable User
@@ -27,8 +27,8 @@ const signup = async (req, res) => {
             });
 
             res.cookie("jwt", token, {maxAge: 1 * 24 * 60 * 60, httpOnly: true});
-            console.log("admin", JSON.stringify(admin, null, 2));
-            console.log(token);
+         //   console.log("admin", JSON.stringify(admin, null, 2));
+           // console.log(token);
             //send users details
             return res.status(201).json({
                 admin:admin,
@@ -71,8 +71,8 @@ const login = async (req, res) => {
 
                 //if password matches wit the one in the database
                 //go ahead and generate a cookie for the admin
-                console.log("admin", JSON.stringify(admin, null, 2));
-                console.log(token);
+             //   console.log("admin", JSON.stringify(admin, null, 2));
+               // console.log(token);
                 //send admin data
                 return res.status(201).json({
                     admin:admin,

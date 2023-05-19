@@ -3,8 +3,7 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser')
 const morgan = require('morgan');
 const admins = require("./api/routes/admin");
-const db = require('./api/models')
-
+const db = require('./api/models/index');
 
 dotenv.config();
 
@@ -25,7 +24,7 @@ app.use('/admins', admins);
 app.use(express.json())
 
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync({alter: true}).then(() => {
     console.log("db has been re sync")
 })
 

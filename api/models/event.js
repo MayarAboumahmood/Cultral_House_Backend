@@ -1,37 +1,36 @@
 module.exports = (sequelize, DataTypes) => {
-    return sequelize.define("customer", {
-        customer_id: {
+    return sequelize.define("event", {
+        event_id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true,
 
         },
-        first_name: {
+        title: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        last_name: {
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: false
+        },
+        ticket_price: {
+            type: DataTypes.FLOAT,
+            allowNull: false
+        },
+        available_places: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        pand_name: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        picture: {
-            type: DataTypes.STRING,
+        begin_date: {
+            type: DataTypes.DATE,
             allowNull: false
         },
-        phone_number: {
-            type: DataTypes.STRING,
-            unique: true,
-            allowNull: false
-        },
-        password: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        birthdate: {
-            type: DataTypes.DATEONLY,
-            allowNull: false
-        },
-     
+
     },
      {timestamps: true},)
 }

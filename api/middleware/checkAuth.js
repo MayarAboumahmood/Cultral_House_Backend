@@ -11,16 +11,7 @@ const Admin = db.admins;
 const saveAdmin = async (req, res, next) => {
     //search the database to see if admin exist
     try {
-        const admin_name = await Admin.findOne({
-            where: {
-                admin_name: req.body.admin_name,
-            },
-        });
-        //if adminName exist in the database respond with a status of 409
-        if (admin_name) {
-            return res.json(409).send("adminName already taken");
-        }
-
+    
         //checking if email already exist
         const emailCheck = await Admin.findOne({
             where: {
