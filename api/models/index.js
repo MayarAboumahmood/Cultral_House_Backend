@@ -6,7 +6,17 @@ const {Sequelize, DataTypes} = require('sequelize')
 //port for my database is 5433
 //database name is discover
 const sequelize = new Sequelize(`postgres://postgres:7119@localhost:5432/test`, {dialect: "postgres"})
-v
+
+// //checking if connection is done
+// sequelize.authenticate().then(() => {
+//     console.log(`Database connected to discover`)
+// }).catch((err) => {
+//     console.log(err)
+// })
+
+const db = {};
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
 db.admins = require('./admin.js')(sequelize, DataTypes);
 db.customers = require('./customer.js')(sequelize, DataTypes);
 db.workers = require('./worker.js')(sequelize, DataTypes);
