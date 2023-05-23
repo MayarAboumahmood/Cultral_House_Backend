@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 //Assigning db.admins to Admin variable
 const Admin = db.admins;
 
+
 //Function to check if adminName or email already exist in the database
 //this is to avoid having two admins with the same adminName and email
 const saveAdmin = async (req, res, next) => {
@@ -62,8 +63,12 @@ const checkIfSuper = async (req, res, next) => {
 
 }
 
+
+
+
 //exporting module
 module.exports = {
     saveAdmin,
-    checkIfSuper
+    checkIfSuper,
+    
 };
