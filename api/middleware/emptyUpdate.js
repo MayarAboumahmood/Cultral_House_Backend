@@ -1,15 +1,23 @@
 const checkIfEmpty = (req, res, next)=>
 {
-    const {first_name, last_name, phone_number, birthdate} = req.body; 
+    const {first_name, last_name, birthdate} = req.body; 
        
     const file = req.file;
-    console.log(!first_name && !last_name && !phone_number && !birthdate && !file)
+    const token = req.headers.authorization;
 
-    if(!first_name && !last_name && !phone_number && !birthdate && !file)
+    if(!token)
+    {
+       return res.status(401).send({msg:"not authorized"})
+ 
+    }
+ 
+
+    if(!first_name && !last_name && !birthdate && !file)
     {
         return res.status(400).send({msg: "update something!!"});
         
     }
+
     next();
 
 }

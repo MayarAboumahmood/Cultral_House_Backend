@@ -5,8 +5,8 @@ const morgan = require('morgan');
 const admins = require("./api/routes/admin");
 const db = require('./api/models/index');
 const customers = require("./api/routes/customer");
-  var multer = require("multer");
-   var upload = multer();
+//   var multer = require("multer");
+//    var upload = multer();
 dotenv.config();
 
 

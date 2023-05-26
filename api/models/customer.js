@@ -35,17 +35,29 @@ module.exports = (sequelize, DataTypes) => {
                 arg: true,
                 msg: 'This phone number is already taken.'
             },
-            allowNull: false,
+            allowNull: true,
             validate: {
-                notNull: {
-                  msg: 'Please enter your phone number'
-                },
+              len: [10,15], 
                 isNumeric: {
                     msg: 'phone number must be a number',
                   }
               },
               
         },
+        email: {
+          type: DataTypes.STRING,
+          unique: {
+              arg: true,
+              msg: 'This email is already taken.'
+          },
+          allowNull: true,
+          validate: {
+              isEmail: {
+                  msg: 'Enter a vaild email',
+                }
+            },
+            
+      },
         password: {
             type: DataTypes.STRING,
             allowNull: false,
