@@ -1,5 +1,6 @@
 //importing modules
-
+const dotenv = require('dotenv');
+dotenv.config();
 const {Sequelize, DataTypes} = require('sequelize')
 
 const sequelize = new Sequelize(`postgres://postgres:${process.env.DB_PASSWORD}@localhost:5432/test`, {dialect: "postgres"})

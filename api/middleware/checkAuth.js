@@ -6,6 +6,7 @@ const {response} = require("express");
 const Admin = db.admins;
 const Worker = db.workers;
 
+
 //Function to check if adminName or email already exist in the database
 //this is to avoid having two admins with the same adminName and email
 const saveAdmin = async (req, res, next) => {
@@ -114,10 +115,12 @@ const getAdminId= async (req,res,next)=>{
     }
 }
 
+
 //exporting module
 module.exports = {
     saveAdmin,
     checkIfSuper,
     saveWorker,
     getAdminId
+
 };

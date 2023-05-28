@@ -247,12 +247,15 @@ module.exports = {
     createAdmin,
     login,
     deleteAdmin,
+    adminDashboard,
     showAllAdmins,
     createWorker,
     deleteWorker,
     showAllWorkers,
     createEvent,
     showAllEvents,
-    deleteEvent
+    deleteEvent,
+      showAllAdmins
 
 };
+

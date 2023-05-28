@@ -4,7 +4,9 @@ const bodyParser = require('body-parser')
 const morgan = require('morgan');
 const admins = require("./api/routes/admin");
 const db = require('./api/models/index');
-
+const customers = require("./api/routes/customer");
+//   var multer = require("multer");
+//    var upload = multer();
 dotenv.config();
 
 
@@ -16,15 +18,16 @@ app.listen(port, () => {
 
 })
 
-
+//app.use(upload.any());
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use('/admins', admins);
+app.use('/customers', customers);
 app.use(express.json())
 
 
-db.sequelize.sync({alter: true}).then(() => {
+db.sequelize.sync().then(() => {
 
     console.log("db has been re sync")
 })
