@@ -1,8 +1,10 @@
 //importing modules
 const db = require("../Models");
 const jwt = require('jsonwebtoken')
+const {response} = require("express");
 //Assigning db.admins to Admin variable
 const Admin = db.admins;
+const Worker = db.workers;
 
 
 //Function to check if adminName or email already exist in the database
@@ -36,6 +38,37 @@ const saveAdmin = async (req, res, next) => {
     }
 };
 
+const saveWorker = async (req, res, next) => {
+    //search the database to see if admin exist
+    try {
+        if (!req.body.email || !req.body.password || !req.body.first_name,!req.body.last_name,!req.body.phone_number) {
+            return res.status(400).json({
+                msg: "validation error"
+            })
+        }
+
+        //checking if email already exist
+        const emailCheck = await Worker.findOne({
+            where: {
+                email: req.body.email,
+            },
+        });
+
+        //if email exist in the database respond with a status of 409
+        if (emailCheck) {
+            return res.status(409).json({
+                msg: "Email does exist in the data base"
+            });
+        }
+
+        next();
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+
+
 const checkIfSuper = async (req, res, next) => {
     let token = req.headers["x-access-token"];
     if (!token) {
@@ -63,12 +96,31 @@ const checkIfSuper = async (req, res, next) => {
 
 }
 
+const getAdminId= async (req,res,next)=>{
+    let token = req.headers["x-access-token"];
+    if (!token) {
+        res.status(403).send();
+    } else {
+        jwt.verify(token, process.env.SECRET, null, (err, decoded) => {
+            if (err) {
+                res.status(401).json({
+                    msg: "Unauthorized!"
+                })
+            } else {
+                req.body.admin_id = decoded.admin.admin_id;
+                next();
+            }
+        });
 
+    }
+}
 
 
 //exporting module
 module.exports = {
     saveAdmin,
     checkIfSuper,
-    
+    saveWorker,
+    getAdminId
+
 };
