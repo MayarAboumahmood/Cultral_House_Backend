@@ -1,6 +1,7 @@
 //importing modules
 const db = require("../Models");
 const jwt = require('jsonwebtoken')
+const {response} = require("express");
 //Assigning db.admins to Admin variable
 const Admin = db.admins;
 const Worker = db.workers;
@@ -94,9 +95,29 @@ const checkIfSuper = async (req, res, next) => {
 
 }
 
+const getAdminId= async (req,res,next)=>{
+    let token = req.headers["x-access-token"];
+    if (!token) {
+        res.status(403).send();
+    } else {
+        jwt.verify(token, process.env.SECRET, null, (err, decoded) => {
+            if (err) {
+                res.status(401).json({
+                    msg: "Unauthorized!"
+                })
+            } else {
+                req.body.admin_id = decoded.admin.admin_id;
+                next();
+            }
+        });
+
+    }
+}
+
 //exporting module
 module.exports = {
     saveAdmin,
     checkIfSuper,
-    saveWorker
+    saveWorker,
+    getAdminId
 };

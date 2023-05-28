@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        pand_name: {
+        band_name: {
             type: DataTypes.STRING,
             allowNull: false
         },

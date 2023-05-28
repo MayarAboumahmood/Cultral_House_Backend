@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const Admin = db.admins;
 const Worker = db.workers;
+const Event = db.events;
 
 const createAdmin = async (req, res) => {
     try {
@@ -132,8 +133,8 @@ const createWorker = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({
-            req:req.body,
-            msg:error
+            req: req.body,
+            msg: error.name
         })
         console.log(error);
     }
@@ -168,13 +169,79 @@ const deleteWorker = async (req, res) => {
 
 }
 
-const showAllWorkers = async (req,res)=>{
+const showAllWorkers = async (req, res) => {
     const workers = await Worker.findAll()
     res.status(200).json({
         msg: "workers has been sent successfully",
         data: workers
     })
 }
+
+const createEvent = async (req, res) => {
+    try {
+        const {title, description, ticket_price, available_places, band_name, begin_date, admin_id} = req.body;
+        const data = {
+            title,
+            description,
+            ticket_price,
+            available_places,
+            band_name,
+            begin_date,
+            admin_id
+        };
+
+        const event = await Event.create(data);
+        return res.status(201).json({
+            msg: "event created successfully",
+            data: event
+        });
+    } catch (error) {
+        res.status(500).json({
+            req: req.body,
+            msg: error.name
+        })
+        console.log(error);
+    }
+
+}
+
+const showAllEvents = async (req, res) => {
+    const events = await Event.findAll()
+    res.status(200).json({
+        msg: "events has been sent successfully",
+        data: events
+    })
+}
+
+const deleteEvent = async (req, res) => {
+    const event_id = req.body.event_id;
+
+    if (!event_id) {
+        res.status(400).json({
+            msg: "no event_id is given"
+        })
+    }
+    const event = await Event.findOne({
+        where: {
+            event_id: event_id
+        }
+    })
+    if (event) {
+
+        event.destroy()
+
+        return res.status(202).json({
+            msg: "Event has been deleted successfully",
+            data: event
+        })
+    } else {
+        res.status(404).json({
+            msg: "Event not found"
+        })
+    }
+
+}
+
 
 module.exports = {
     createAdmin,
@@ -183,5 +250,9 @@ module.exports = {
     showAllAdmins,
     createWorker,
     deleteWorker,
-    showAllWorkers
+    showAllWorkers,
+    createEvent,
+    showAllEvents,
+    deleteEvent
+
 };

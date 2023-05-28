@@ -11,15 +11,18 @@ router.post('/login', adminController.login)
 
 router.delete('/delete-admin', checkAuth.checkIfSuper, adminController.deleteAdmin)
 
-router.get('/show-all-admins',checkAuth.checkIfSuper,adminController.showAllAdmins)
+router.get('/show-all-admins', checkAuth.checkIfSuper, adminController.showAllAdmins)
 
-router.get('/show-all-workers',checkAuth.checkIfSuper,adminController.showAllWorkers)
+router.get('/show-all-workers', checkAuth.checkIfSuper, adminController.showAllWorkers)
 
-
-router.post('/create_worker',checkAuth.checkIfSuper,checkAuth.saveWorker,adminController.createWorker)
+router.post('/create-worker', checkAuth.checkIfSuper, checkAuth.saveWorker, adminController.createWorker)
 
 router.delete('/delete-worker', checkAuth.checkIfSuper, adminController.deleteWorker)
 
+router.post('/create-event', checkAuth.getAdminId, adminController.createEvent);
 
+router.get('/show-all-events', adminController.showAllEvents)
+
+router.delete('/delete-event', adminController.deleteEvent)
 
 module.exports = router
