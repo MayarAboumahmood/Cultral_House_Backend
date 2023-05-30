@@ -247,7 +247,6 @@ module.exports = {
     createAdmin,
     login,
     deleteAdmin,
-    adminDashboard,
     showAllAdmins,
     createWorker,
     deleteWorker,
@@ -255,7 +254,6 @@ module.exports = {
     createEvent,
     showAllEvents,
     deleteEvent,
-      showAllAdmins
 
 };
 

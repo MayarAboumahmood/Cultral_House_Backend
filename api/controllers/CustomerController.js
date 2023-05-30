@@ -86,7 +86,6 @@ const login = async (req, res) => {
 
 }
 
-
 const deleteCustomer = async (req, res) => {
 
 
@@ -231,7 +230,6 @@ const changeNumber = async (req, res) => {
 
 }
 
-
 const changeEmail = async (req, res) => {
 
     const token = req.headers.authorization;
@@ -286,7 +284,6 @@ const changeEmail = async (req, res) => {
 
 
 }
-
 
 const resetPassword = async (req, res) => {
 
