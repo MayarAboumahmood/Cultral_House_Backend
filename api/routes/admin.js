@@ -2,7 +2,7 @@
 const express = require('express')
 const adminController = require('../controllers/AdminController')
 const checkAuth = require('../middleware/checkAuth')
-const upload = require('../middleware/fileSaver')
+const upload = require('../middleware/upload')
 
 const router = express.Router()
 
@@ -16,7 +16,7 @@ router.get('/show-all-admins', checkAuth.checkIfSuper, adminController.showAllAd
 
 router.get('/show-all-workers', checkAuth.checkIfSuper, adminController.showAllWorkers)
 
-router.post('/create-worker', checkAuth.checkIfSuper, upload.workerPhotoUploader.single('image'), checkAuth.checkWorker, adminController.createWorker)
+router.post('/create-worker', checkAuth.checkIfSuper, upload('workers').single('image'), checkAuth.checkWorker, adminController.createWorker)
 
 router.delete('/delete-worker', checkAuth.checkIfSuper, adminController.deleteWorker)
 
@@ -26,4 +26,4 @@ router.get('/show-all-events', adminController.showAllEvents)
 
 router.delete('/delete-event', adminController.deleteEvent)
 
-module.exports = router
+module.exports = router;

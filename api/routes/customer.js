@@ -11,10 +11,10 @@ const router = express.Router();
 const customerController = require('../controllers/CustomerController');
 
 
-router.post('/signup', upload.single('picture'), checkCredentials,customerController.signUp);
+router.post('/signup', upload('customers').single('picture'), checkCredentials,customerController.signUp);
 router.post('/login',checkCredentials,customerController.login);
 router.delete('/delete',customerController.deleteCustomer);
-router.put('/update', upload.single('picture'), checkIfEmpty, customerController.update);
+router.put('/update', upload('customers').single('picture'), checkIfEmpty, customerController.update);
 router.put('/change-number', customerController.changeNumber);
 router.put('/change-email', customerController.changeEmail);
 router.put('/reset-password', customerController.resetPassword);

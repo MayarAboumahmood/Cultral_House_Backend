@@ -32,6 +32,9 @@ const signUp = async (req, res) => {
 
     }).catch(({errors}) => {
 
+        unlinkSync(picture);
+
+
         return res.status(400).send({msg: errors[0].message});
     });
 

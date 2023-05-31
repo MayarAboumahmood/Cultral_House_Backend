@@ -135,6 +135,8 @@ const createWorker = async (req, res) => {
         });
 
     } catch (error) {
+        unlinkSync(data.image);
+
         res.status(500).json({
             req: req.body,
             msg: error.name
@@ -157,6 +159,8 @@ const deleteWorker = async (req, res) => {
         }
     })
     if (worker) {
+
+        unlinkSync(worker.image);
 
         worker.destroy()
 
