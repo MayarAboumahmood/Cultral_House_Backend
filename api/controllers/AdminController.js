@@ -135,7 +135,6 @@ const createWorker = async (req, res) => {
         });
 
     } catch (error) {
-        unlinkSync(data.image);
 
         res.status(500).json({
             req: req.body,

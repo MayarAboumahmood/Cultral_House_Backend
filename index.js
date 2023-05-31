@@ -17,7 +17,7 @@ app.listen(port, () => {
 
 })
 
-app.use('/public',express.static('public'))
+app.use('/images',express.static('images'))
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
