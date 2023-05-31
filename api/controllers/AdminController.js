@@ -2,6 +2,7 @@
 const bcrypt = require("bcrypt");
 const db = require("../Models/index");
 const jwt = require("jsonwebtoken");
+const {unlinkSync} = require('fs');
 
 const Admin = db.admins;
 const Worker = db.workers;
