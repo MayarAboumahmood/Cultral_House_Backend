@@ -120,8 +120,11 @@ const createWorker = async (req, res) => {
             last_name,
             phone_number,
             email,
-            password
+            password,
         };
+        if (req.file) {
+            data.image = req.file.path
+        }
 
         //saving the user
         const worker = await Worker.create(data);

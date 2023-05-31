@@ -38,10 +38,11 @@ const saveAdmin = async (req, res, next) => {
     }
 };
 
-const saveWorker = async (req, res, next) => {
+const checkWorker = async (req, res, next) => {
     //search the database to see if admin exist
     try {
         if (!req.body.email || !req.body.password || !req.body.first_name,!req.body.last_name,!req.body.phone_number) {
+            console.log(req.body)
             return res.status(400).json({
                 msg: "validation error"
             })
@@ -120,7 +121,7 @@ const getAdminId= async (req,res,next)=>{
 module.exports = {
     saveAdmin,
     checkIfSuper,
-    saveWorker,
+    checkWorker,
     getAdminId
 
 };

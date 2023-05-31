@@ -5,10 +5,9 @@ const morgan = require('morgan');
 const admins = require("./api/routes/admin");
 const db = require('./api/models/index');
 const customers = require("./api/routes/customer");
-//   var multer = require("multer");
-//    var upload = multer();
-dotenv.config();
 
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT;
@@ -18,7 +17,7 @@ app.listen(port, () => {
 
 })
 
-//app.use(upload.any());
+app.use('/public',express.static('public'))
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
