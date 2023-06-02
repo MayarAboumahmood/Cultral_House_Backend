@@ -92,7 +92,7 @@ const login = async (req, res) => {
 const deleteCustomer = async (req, res) => {
 
 
-    const token = req.headers.authorization;
+    const token = req.headers["x-access-token"];
     if (!token) {
         return res.status(401).send({msg: "not authorized"})
 
@@ -133,11 +133,11 @@ const update = async (req, res) => {
 
 
     const {first_name, last_name, birthdate} = req.body;
-    const token = req.headers.authorization;
+    const token = req.headers["x-access-token"];
 
 
     const file = req.file;
-    var picture;
+    let picture;
     if (file) {
         picture = file.path;
     }
@@ -179,7 +179,7 @@ const update = async (req, res) => {
 
 const changeNumber = async (req, res) => {
 
-    const token = req.headers.authorization;
+    const token = req.headers["x-access-token"];
     if (!token) {
         return res.status(401).send({msg: "not authorized"})
 
@@ -235,7 +235,7 @@ const changeNumber = async (req, res) => {
 
 const changeEmail = async (req, res) => {
 
-    const token = req.headers.authorization;
+    const token = req.headers["x-access-token"];
     if (!token) {
         return res.status(401).send({msg: "not authorized"})
 
@@ -291,7 +291,7 @@ const changeEmail = async (req, res) => {
 const resetPassword = async (req, res) => {
 
 
-    const token = req.headers.authorization;
+    const token = req.headers["x-access-token"];
     if (!token) {
         return res.status(401).send({msg: "not authorized"})
 
