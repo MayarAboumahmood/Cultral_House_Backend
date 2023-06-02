@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const admins = require("./api/routes/admin");
 const db = require('./api/models/index');
 const customers = require("./api/routes/customer");
-
+const cors = require('cors')
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ app.listen(port, () => {
     console.log("you are connected to 127.0.0.1:" + port)
 
 })
-
+app.use(cors());
 app.use('/images',express.static('images'))
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({extended: false}));
