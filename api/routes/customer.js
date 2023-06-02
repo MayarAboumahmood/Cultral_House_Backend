@@ -19,7 +19,8 @@ router.put('/change-number', customerController.changeNumber);
 router.put('/change-email', customerController.changeEmail);
 router.put('/reset-password', customerController.resetPassword);
 router.post('/forgot-password', customerController.forgotPassword);
-
+router.post('/events/:event_id/make-reservation', customerController.makeReservation);
+router.post('/events/reservations/:reservation_id', customerController.setTable);
 
 
 

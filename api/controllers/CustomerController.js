@@ -7,6 +7,8 @@ const {unlinkSync} = require('fs');
 
 dotenv.config();
 const Customer = db.customers;
+const Reservation = db.reservations;
+const Event = db.events;
 
 
 const signUp = async (req, res) => {
@@ -391,4 +393,141 @@ const forgotPassword = async (req, res) => {
 }
 
 
-module.exports = {signUp, login, deleteCustomer, update, changeNumber, changeEmail, resetPassword, forgotPassword};
+const makeReservation = async (req, res)=>
+{
+
+     const token = req.headers["x-access-token"];
+
+
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+    }
+
+    try {
+        
+        const event_id = req.params.event_id;
+
+        if (!event_id) {
+            throw new Error("choose the event");
+        }
+    
+
+    const number_of_places = req.body.number_of_places;
+
+    if (!number_of_places) {
+
+        throw new Error("enter the number of the attendees");
+
+    }
+
+    const decode = jwt.verify(token, process.env.SECRET);
+
+
+    const customer_id = decode.customer_id;
+    const customer_name = decode.first_name;
+
+    const event = await Event.findByPk(event_id);
+
+    
+    if (event == null) {
+
+        throw new Error("event not found");
+
+    }
+
+    event.available_places -= number_of_places;
+
+   const reservation = await Reservation.create({
+        event_id,
+        number_of_places,
+        customer_id,
+        customer_name
+
+    });
+
+    event.save();
+
+    res.status(200).send({reservation});
+
+    } catch (error) {
+        res.status(401).send({msg: error.message});
+
+    }
+
+    
+    
+}
+
+
+const setTable = async (req, res)=>
+{
+
+    const token = req.headers["x-access-token"];
+
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+    }
+
+    try {
+        
+        const reservation_id = req.params.reservation_id;
+        const table_number = req.body.table_number;
+
+
+        if (!reservation_id) {
+            throw new Error("choose the reservation");
+        }
+
+      
+        const reservation = await Reservation.findByPk(reservation_id);
+
+        if (reservation === null) {
+
+            throw new Error("reservation not found");
+    
+        }
+
+
+    if (!table_number) {
+
+        throw new Error("enter the number of the table");
+
+    }
+
+    const decode = jwt.verify(token, process.env.SECRET);
+
+
+    const customer_id = decode.customer_id;
+   
+
+   
+    if(!(customer_id === reservation.customer_id))
+    {
+        throw new Error(" you are not allowed");
+
+    }
+
+    const tableIsTaken = await Reservation.findOne({where: {table_number}});
+
+
+    if (!(tableIsTaken === null)) {
+        throw new Error("table is taken");
+
+    }
+    reservation.table_number = table_number;
+
+    reservation.save();
+
+    res.status(200).send({reservation});
+
+    } catch (error) {
+        res.status(401).send({msg: error.message});
+
+    }
+
+    
+    
+}
+
+
+module.exports = {signUp, login, deleteCustomer, update, changeNumber, changeEmail, resetPassword, forgotPassword, makeReservation, setTable};

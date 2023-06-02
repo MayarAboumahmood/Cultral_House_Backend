@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         attendance: {
             type: DataTypes.BOOLEAN,
-            allowNull: false
+            allowNull: true
         },
         number_of_places: {
             type: DataTypes.INTEGER,
@@ -16,11 +16,11 @@ module.exports = (sequelize, DataTypes) => {
         },
         attendance_number: {
             type: DataTypes.INTEGER,
-            allowNull: false
+            allowNull: true
         },
         table_number: {
             type: DataTypes.INTEGER,
-            allowNull: false
+            allowNull: true
         },
         customer_name: {
             type: DataTypes.STRING,

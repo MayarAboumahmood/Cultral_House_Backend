@@ -3,7 +3,7 @@ const checkIfEmpty = (req, res, next)=>
     const {first_name, last_name, birthdate} = req.body; 
        
     const file = req.file;
-    const token = req.headers.authorization;
+    const token = req.headers["x-access-token"];
 
     if(!token)
     {

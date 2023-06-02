@@ -26,7 +26,7 @@ app.use('/customers', customers);
 app.use(express.json())
 
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync({alter: true}).then(() => {
 
     console.log("db has been re sync")
 })
