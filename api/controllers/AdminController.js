@@ -113,7 +113,6 @@ const showAllAdmins = async (req, res) => {
 }
 
 const createWorker = async (req, res) => {
-    console.log(req.files)
     try {
         const {first_name, last_name, phone_number, email, password} = req.body;
         
@@ -125,8 +124,8 @@ const createWorker = async (req, res) => {
             password,
         };
 
-        if (req.files[0]) {
-            data.image = req.files[0].path
+        if (req.file) {
+            data.image = req.file.path
         }
 
         //saving the user

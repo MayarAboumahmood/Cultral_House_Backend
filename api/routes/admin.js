@@ -16,7 +16,7 @@ router.get('/show-all-admins', checkAuth.checkIfSuper, adminController.showAllAd
 
 router.get('/show-all-workers', checkAuth.checkIfSuper, adminController.showAllWorkers)
 
-router.post('/create-worker', checkAuth.checkIfSuper, upload('workers').any('image'), checkAuth.checkWorker, adminController.createWorker)
+router.post('/create-worker', checkAuth.checkIfSuper, upload('workers').single('image'), checkAuth.checkWorker, adminController.createWorker)
 
 router.delete('/delete-worker', checkAuth.checkIfSuper, adminController.deleteWorker)
 
