@@ -113,7 +113,7 @@ const showAllAdmins = async (req, res) => {
 }
 
 const createWorker = async (req, res) => {
-    return res.json(req.files)
+    console.log(req.files)
     try {
         const {first_name, last_name, phone_number, email, password} = req.body;
         
