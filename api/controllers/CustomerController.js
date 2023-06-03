@@ -4,6 +4,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendEmail = require('./MailController');
 const {unlinkSync} = require('fs');
+const {Op} = require('sequelize');
+
 
 dotenv.config();
 const Customer = db.customers;
@@ -435,6 +437,16 @@ const makeReservation = async (req, res)=>
 
     }
 
+    if (number_of_places < 1) {
+        throw new Error("enter a valid number");
+
+    }
+
+    if (number_of_places > event.available_places) {
+        throw new Error("no enough spots in the events");
+
+    }
+
     event.available_places -= number_of_places;
 
    const reservation = await Reservation.create({
@@ -459,7 +471,7 @@ const makeReservation = async (req, res)=>
 }
 
 
-const setTable = async (req, res)=>
+const setSection = async (req, res)=>
 {
 
     const token = req.headers["x-access-token"];
@@ -471,7 +483,7 @@ const setTable = async (req, res)=>
     try {
         
         const reservation_id = req.params.reservation_id;
-        const table_number = req.body.table_number;
+        const section_number = req.body.section_number;
 
 
         if (!reservation_id) {
@@ -488,9 +500,13 @@ const setTable = async (req, res)=>
         }
 
 
-    if (!table_number) {
+    if (!section_number) {
 
-        throw new Error("enter the number of the table");
+        throw new Error("enter the number of the section");
+
+    }
+    if (section_number < 1) {
+        throw new Error("enter a valid number");
 
     }
 
@@ -507,14 +523,20 @@ const setTable = async (req, res)=>
 
     }
 
-    const tableIsTaken = await Reservation.findOne({where: {table_number}});
+  
+    const reservations = await Reservation.count({
+        where: { section_number },
+      });
 
+    if (reservations === 10) {
+        throw new Error(" there is no space in this section");
 
-    if (!(tableIsTaken === null)) {
-        throw new Error("table is taken");
-
+        
     }
-    reservation.table_number = table_number;
+
+
+  
+    reservation.section_number = section_number;
 
     reservation.save();
 
@@ -530,4 +552,383 @@ const setTable = async (req, res)=>
 }
 
 
-module.exports = {signUp, login, deleteCustomer, update, changeNumber, changeEmail, resetPassword, forgotPassword, makeReservation, setTable};
+const deleteReservation = async (req, res)=>{
+
+    const token = req.headers["x-access-token"];
+
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+    }
+
+    try {
+        
+        const reservation_id = req.params.reservation_id;
+
+
+        if (!reservation_id) {
+            throw new Error("choose the reservation");
+        }
+
+      
+        const reservation = await Reservation.findByPk(reservation_id);
+
+        if (reservation === null) {
+
+            throw new Error("reservation not found");
+    
+        }
+        const decode = jwt.verify(token, process.env.SECRET);
+
+
+        const customer_id = decode.customer_id;
+       
+    
+       
+        if(!(customer_id === reservation.customer_id))
+        {
+            throw new Error(" you are not allowed");
+    
+        }
+        else{
+
+
+            const event_id = reservation.event_id;
+
+            const number_of_places = reservation.number_of_places;
+            const event = await Event.findByPk(event_id);
+
+            event.available_places += number_of_places;
+
+            reservation.destroy();
+            event.save();
+            res.status(202).send({msg: "reservation has been deleted successfully"});
+
+        }
+
+
+    } catch (error) {
+        res.status(401).send({msg: error.message});
+
+    }
+
+
+
+}
+
+
+const updateReservation = async (req, res)=>{
+    const token = req.headers["x-access-token"];
+
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+    }
+
+    try {
+        
+        const reservation_id = req.params.reservation_id;
+        const number_of_places = req.body.number_of_places;
+
+
+        if (!reservation_id) {
+            throw new Error("choose the reservation");
+        }
+
+      
+        const reservation = await Reservation.findByPk(reservation_id);
+
+        if (reservation === null) {
+
+            throw new Error("reservation not found");
+    
+        }
+
+
+    if (!number_of_places) {
+
+        throw new Error("enter the number of the places");
+
+    }
+
+    const decode = jwt.verify(token, process.env.SECRET);
+
+
+    const customer_id = decode.customer_id;
+   
+
+   
+    if(!(customer_id === reservation.customer_id))
+    {
+        throw new Error(" you are not allowed");
+
+    }
+
+  
+    const old = reservation.number_of_places;
+
+    const newNum = old - number_of_places;
+
+
+
+    const event_id = reservation.event_id;
+
+    const event = await Event.findByPk(event_id);
+
+    if (number_of_places < 1) {
+        throw new Error("enter a valid number");
+
+    }
+
+
+    event.available_places += newNum;
+
+    if (event.available_places < 0) {
+        throw new Error("no enough spots in the events");
+
+    }
+
+    reservation.number_of_places = number_of_places;
+  
+    event.save();
+
+    reservation.save();
+
+    res.status(200).send({reservation});
+
+    } catch (error) {
+        res.status(401).send({msg: error.message});
+
+    }
+
+    
+    
+}
+
+
+
+const showReservations = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } else {
+
+
+            const reservations = await Reservation.findAll({where:{customer_id}});
+            console.log(reservations)
+
+            if (reservations.length === 0) {
+                throw new Error("no reservations found");
+
+
+            }
+
+            res.status(202).send({msg: reservations});
+
+        }
+
+
+    } catch (error) {
+
+        return res.status(401).send({msg: error.message});
+
+    }
+
+}
+
+
+const viewReservation = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+
+    const reservation_id = req.params.reservation_id;
+
+    if (!reservation_id) {
+        
+        return res.status(400).send({msg: "choose reservation to show"})
+
+    }
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } else {
+
+
+            const reservation = await Reservation.findOne({where:{reservation_id}});
+
+            if (reservation == null) {
+                
+                throw new Error("reservation not found");
+
+
+            }
+
+            if (reservation.customer_id !== customer_id) {
+
+                throw new Error("Not allowed");
+                
+            }
+
+            res.status(202).send({msg: reservation});
+
+        }
+
+
+    } catch (error) {
+
+        return res.status(401).send({msg: error.message});
+
+    }
+
+}
+
+
+
+const showEvents = async (req, res)=>{
+
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } else {
+
+
+            const reservations = await Reservation.findAll({where:{customer_id}});
+
+            if (reservations.length == 0) {
+                
+                throw new Error("no events found");
+
+
+            }
+
+            const event_id = reservations.map(v => v.event_id);
+          
+           const events = await Event.findAll({
+                where: {
+                    [Op.or]: {event_id},
+                },
+              })
+            
+
+            res.status(202).send({msg: events});
+
+        }
+
+
+    } catch (error) {
+
+        return res.status(401).send({msg: error.message});
+
+    }
+
+
+
+
+}
+
+const viewEvent = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+
+    const event_id = req.params.event_id;
+
+    if (!event_id) {
+        
+        return res.status(400).send({msg: "choose event to show"})
+
+    }
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } else {
+
+
+            const event = await Event.findOne({where:{event_id}});
+
+            if (event == null) {
+                
+                throw new Error("event not found");
+
+
+            }
+
+            res.status(202).send({msg: event});
+
+        }
+
+
+    } catch (error) {
+
+        return res.status(401).send({msg: error.message});
+
+    }
+
+
+
+
+}
+
+
+   
+
+
+module.exports = {signUp, login, deleteCustomer, update, changeNumber, changeEmail, resetPassword, forgotPassword,
+     makeReservation, setSection, deleteReservation, updateReservation,showEvents, viewReservation, showReservations, viewEvent};

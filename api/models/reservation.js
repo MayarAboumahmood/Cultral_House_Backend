@@ -16,9 +16,9 @@ module.exports = (sequelize, DataTypes) => {
         },
         attendance_number: {
             type: DataTypes.INTEGER,
-            allowNull: true
+            allowNull: true,
         },
-        table_number: {
+        section_number: {
             type: DataTypes.INTEGER,
             allowNull: true
         },

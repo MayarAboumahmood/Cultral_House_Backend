@@ -20,7 +20,19 @@ router.put('/change-email', customerController.changeEmail);
 router.put('/reset-password', customerController.resetPassword);
 router.post('/forgot-password', customerController.forgotPassword);
 router.post('/events/:event_id/make-reservation', customerController.makeReservation);
-router.post('/events/reservations/:reservation_id', customerController.setTable);
+router.post('/events/reservations/:reservation_id/setSection', customerController.setSection);
+router.delete('/events/reservations/:reservation_id/delete', customerController.deleteReservation);
+router.put('/events/reservations/:reservation_id/update', customerController.updateReservation);
+router.get('/events/reservations', customerController.showReservations);
+router.get('/events/reservations/:reservation_id', customerController.viewReservation);
+router.get('/events', customerController.showEvents);
+router.get('/events/:event_id', customerController.viewEvent);
+
+
+
+
+
+
 
 
 
