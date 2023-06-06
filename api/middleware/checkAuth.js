@@ -68,8 +68,6 @@ const checkWorker = async (req, res, next) => {
     }
 };
 
-
-
 const checkIfSuper = async (req, res, next) => {
     let token = req.headers["x-access-token"];
     if (!token) {
