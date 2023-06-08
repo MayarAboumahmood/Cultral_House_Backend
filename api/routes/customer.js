@@ -27,6 +27,8 @@ router.get('/events/reservations', customerController.showReservations);
 router.get('/events/reservations/:reservation_id', customerController.viewReservation);
 router.get('/events', customerController.showEvents);
 router.get('/events/:event_id', customerController.viewEvent);
+router.post('/make-order', customerController.makeOrder);
+
 
 
 

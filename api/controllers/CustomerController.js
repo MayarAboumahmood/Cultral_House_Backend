@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendEmail = require('./MailController');
 const {unlinkSync} = require('fs');
-const {Op, DATE} = require('sequelize');
+const { Sequelize} = require('sequelize');
 
 
 dotenv.config();
@@ -12,6 +12,10 @@ const Customer = db.customers;
 const Reservation = db.reservations;
 const Event = db.events;
 const Order = db.orders;
+const Orders_drinks = db.orders_drinks;
+const Op = db.Op;
+const sequelize = db.sequelize;
+
 
 
 
@@ -928,43 +932,86 @@ const viewEvent = async (req, res)=>{
 
 }
 
-// const makeOrder = async (req, res)=>{
+const makeOrder = async (req, res)=>{
 
-//     const token = req.headers["x-access-token"];
-//     if (!token) {
-//         return res.status(401).send({msg: "not authorized"})
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
 
-//     }
+    }
 
+    const reservation_id = req.body.reservation_id;
+    const drinks = req.body.drinks;
 
-//     try {
+    if(!reservation_id){
+        return res.status(400).send({msg: "insert reservaation_id"})
 
-//         const decodedToken = jwt.verify(token, process.env.SECRET);
+    }
+    if(!drinks){
+        return res.status(400).send({msg: "insert drinks"})
 
-//         const customer_id = decodedToken.customer_id;
+    }
 
-//         const customer = await Customer.findByPk(customer_id);
+     let transaction;
 
-//         if (!customer) {
-//             throw new Error("customer not found");
-//         }
+    try {
 
-//         const reseravation = await Reservation.findOne({where:{customer_id}});
+        const decodedToken = jwt.verify(token, process.env.SECRET);
 
-
-//         const order = await Order.create({
-
-//             order_date: DATE.NOW()
-
-//         });
-
+        const customer_id = decodedToken.customer_id;
         
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        }
+
+
+
+         transaction = await sequelize.transaction();
+
+        const order = await Order.create({
+
+            order_date: Date(),
+            reservation_id,
+
+        },{transaction});
+
+
+
+        const ODS = [];
+
+        for(const drink of drinks)
+        {
+            const { drink_id, quantity } = drink;
+
+
+            const od = await Orders_drinks.create({
+                order_id : order.order_id,
+
+                drink_id,
+    
+                quantity
+
+            }, {transaction});
+
+            ODS.push(od);
+
+        }
         
-//     } catch (error) {
+       await transaction.commit();
+
+        res.status(202).send({order, ODS});
+
+    } catch (error) {
         
-//     }
-// }
+        await transaction.rollback();
+
+        return res.status(401).send({msg: error.message});
+
+    }
+}
 
 
 module.exports = {signUp, login, deleteCustomer, update, changeNumber, changeEmail, resetPassword, forgotPassword,
-     makeReservation, setSection, deleteReservation, updateReservation,showEvents, viewReservation, showReservations, viewEvent};
+     makeReservation, setSection, deleteReservation, updateReservation,showEvents, viewReservation, showReservations, viewEvent, makeOrder};
