@@ -2,7 +2,7 @@
 const bcrypt = require("bcrypt");
 const db = require("../Models/index");
 const jwt = require("jsonwebtoken");
-const {unlinkSync} = require('fs');
+const { unlinkSync } = require('fs');
 
 const Admin = db.admins;
 const Worker = db.workers;
@@ -10,7 +10,7 @@ const Event = db.events;
 
 const createAdmin = async (req, res) => {
     try {
-        const {admin_name, email, password, is_super} = req.body;
+        const { admin_name, email, password, is_super } = req.body;
         const data = {
             admin_name,
             email,
@@ -32,9 +32,9 @@ const createAdmin = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const {email, password} = req.body;
+        const { email, password } = req.body;
         if (!email || !password) {
-            res.status(400).json({msg: "validation error"})
+            res.status(400).json({ msg: "validation error" })
         }
 
         //find an admin by their email
@@ -53,7 +53,7 @@ const login = async (req, res) => {
             //generate token with the admin's id and the secretKey in the env file
 
             if (isSame) {
-                let token = jwt.sign({admin: admin}, process.env.SECRET, null, {
+                let token = jwt.sign({ admin: admin }, process.env.SECRET, null, {
                     expiresIn: 24 * 60 * 60 * 1000,
                 });
 
@@ -65,10 +65,10 @@ const login = async (req, res) => {
                     token: token
                 });
             } else {
-                return res.status(401).json({msg: "Authentication failed"});
+                return res.status(401).json({ msg: "Authentication failed" });
             }
         } else {
-            return res.status(401).json({msg: "Authentication failed"});
+            return res.status(401).json({ msg: "Authentication failed" });
         }
     } catch (error) {
         console.log(error);
@@ -114,7 +114,7 @@ const showAllAdmins = async (req, res) => {
 
 const createWorker = async (req, res) => {
     try {
-        const {first_name, last_name, phone_number, email, password} = req.body;
+        const { first_name, last_name, phone_number, email, password } = req.body;
 
         const data = {
             first_name,
@@ -123,6 +123,7 @@ const createWorker = async (req, res) => {
             email,
             password,
         };
+
         if (req.file) {
             data.image = req.file.path
         }
@@ -159,8 +160,10 @@ const deleteWorker = async (req, res) => {
         }
     })
     if (worker) {
+        if (worker.image) {
+            unlinkSync(worker.image);
 
-        unlinkSync(worker.image);
+        }
 
         worker.destroy()
 
@@ -186,7 +189,7 @@ const showAllWorkers = async (req, res) => {
 
 const createEvent = async (req, res) => {
     try {
-        const {title, description, ticket_price, available_places, band_name, begin_date, admin_id} = req.body;
+        const { title, description, ticket_price, available_places, band_name, begin_date, admin_id } = req.body;
         const data = {
             title,
             description,
