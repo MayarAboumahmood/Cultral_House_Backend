@@ -4,13 +4,15 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendEmail = require('./MailController');
 const {unlinkSync} = require('fs');
-const {Op} = require('sequelize');
+const {Op, DATE} = require('sequelize');
 
 
 dotenv.config();
 const Customer = db.customers;
 const Reservation = db.reservations;
 const Event = db.events;
+const Order = db.orders;
+
 
 
 const signUp = async (req, res) => {
@@ -22,7 +24,7 @@ const signUp = async (req, res) => {
     }
     const picture = req.file.path;
 
-    Customer.create({
+     Customer.create({
         first_name,
         last_name,
         phone_number,
@@ -116,9 +118,9 @@ const deleteCustomer = async (req, res) => {
         } else {
 
 
-            unlinkSync(customer.picture);
+             unlinkSync(customer.picture);
 
-            customer.destroy();
+             await customer.destroy();
             res.status(202).send({msg: "customer has been deleted successfully"});
 
         }
@@ -331,7 +333,7 @@ const resetPassword = async (req, res) => {
         } else {
 
             customer.password = await bcrypt.hash(new_password, 10);
-            customer.save();
+            await customer.save();
             res.status(200).send({msg: "password has been updated", customer});
 
 
@@ -457,7 +459,7 @@ const makeReservation = async (req, res)=>
 
     });
 
-    event.save();
+    await event.save();
 
     res.status(200).send({reservation});
 
@@ -538,7 +540,7 @@ const setSection = async (req, res)=>
   
     reservation.section_number = section_number;
 
-    reservation.save();
+    await reservation.save();
 
     res.status(200).send({reservation});
 
@@ -599,8 +601,8 @@ const deleteReservation = async (req, res)=>{
 
             event.available_places += number_of_places;
 
-            reservation.destroy();
-            event.save();
+            await reservation.destroy();
+            await event.save();
             res.status(202).send({msg: "reservation has been deleted successfully"});
 
         }
@@ -688,9 +690,10 @@ const updateReservation = async (req, res)=>{
 
     reservation.number_of_places = number_of_places;
   
-    event.save();
 
-    reservation.save();
+    await reservation.save();
+
+    await event.save();
 
     res.status(200).send({reservation});
 
@@ -729,7 +732,6 @@ const showReservations = async (req, res)=>{
 
 
             const reservations = await Reservation.findAll({where:{customer_id}});
-            console.log(reservations)
 
             if (reservations.length === 0) {
                 throw new Error("no reservations found");
@@ -926,8 +928,42 @@ const viewEvent = async (req, res)=>{
 
 }
 
+// const makeOrder = async (req, res)=>{
 
-   
+//     const token = req.headers["x-access-token"];
+//     if (!token) {
+//         return res.status(401).send({msg: "not authorized"})
+
+//     }
+
+
+//     try {
+
+//         const decodedToken = jwt.verify(token, process.env.SECRET);
+
+//         const customer_id = decodedToken.customer_id;
+
+//         const customer = await Customer.findByPk(customer_id);
+
+//         if (!customer) {
+//             throw new Error("customer not found");
+//         }
+
+//         const reseravation = await Reservation.findOne({where:{customer_id}});
+
+
+//         const order = await Order.create({
+
+//             order_date: DATE.NOW()
+
+//         });
+
+        
+        
+//     } catch (error) {
+        
+//     }
+// }
 
 
 module.exports = {signUp, login, deleteCustomer, update, changeNumber, changeEmail, resetPassword, forgotPassword,

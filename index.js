@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const admins = require("./api/routes/admin");
 const db = require('./api/models/index');
 const customers = require("./api/routes/customer");
+const drinks = require("./api/routes/drink");
 const cors = require('cors')
 
 dotenv.config();
@@ -23,6 +24,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 app.use('/admins', admins);
 app.use('/customers', customers);
+app.use('/drinks', drinks);
+
 app.use(express.json())
 
 
