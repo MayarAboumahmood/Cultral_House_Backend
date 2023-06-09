@@ -81,7 +81,7 @@ db.reservations.hasMany(db.orders, {foreignKey: 'reservation_id'});
 db.orders.belongsTo(db.reservations, {foreignKey: 'reservation_id'});
 
 // order-drink relation
-db.orders.hasMany(db.orders_drinks, {foreignKey: 'order_id'});
+db.orders.hasMany(db.orders_drinks, {foreignKey: 'order_id', onDelete: 'cascade'});
 db.orders_drinks.belongsTo(db.orders, {foreignKey: 'order_id'});
 db.drinks.hasMany(db.orders_drinks, {foreignKey: 'drink_id'});
 db.orders_drinks.belongsTo(db.drinks, {foreignKey: 'drink_id'});

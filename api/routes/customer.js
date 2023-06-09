@@ -28,6 +28,13 @@ router.get('/events/reservations/:reservation_id', customerController.viewReserv
 router.get('/events', customerController.showEvents);
 router.get('/events/:event_id', customerController.viewEvent);
 router.post('/make-order', customerController.makeOrder);
+router.get('/show-order', customerController.showOrderDetails);
+router.put('/update-order', customerController.updateOrder);
+router.delete('/delete-order', customerController.deleteOrder);
+router.get('/show-orders', customerController.showOrders);
+router.get('/browseBills', customerController.browseBills);
+
+
 
 
 
