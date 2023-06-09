@@ -27,7 +27,7 @@ const saveAdmin = async (req, res, next) => {
 
         //if email exist in the database respond with a status of 409
         if (emailCheck) {
-            return res.status(409).json({
+            return res.status(400).json({
                 msg: "Email does exist in the data base"
             });
         }
@@ -107,6 +107,25 @@ const getAdminId= async (req,res,next)=>{
                 })
             } else {
                 req.body.admin_id = decoded.admin.admin_id;
+                next();
+            }
+        });
+
+    }
+}
+
+const checkUser = async (req,res,next)=>{
+    let token = req.headers["x-access-token"];
+    if (!token) {
+        res.status(403).send();
+    } else {
+        jwt.verify(token, process.env.SECRET, null, (err, decoded) => {
+            if (err) {
+                res.status(401).json({
+                    msg: "Unauthorized!"
+                })
+            } else {
+                req.body.customer_id = decoded.admin.customer_id;
                 next();
             }
         });
