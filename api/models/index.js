@@ -56,7 +56,7 @@ db.reservations.belongsTo(db.workers, {foreignKey: 'worker_id'});
 
 //customer-report relation
 db.customers.hasMany(db.customers_reports, {foreignKey: 'customer_id'});
-db.reports.hasMany(db.customers_reports, {foreignKey: 'report_id'});
+db.reports.hasMany(db.customers_reports, {foreignKey: 'report_id', onDelete: 'cascade'});
 db.customers_reports.belongsTo(db.customers, {foreignKey: 'customer_id'});
 db.customers_reports.belongsTo(db.reports, {foreignKey: 'report_id'});
 

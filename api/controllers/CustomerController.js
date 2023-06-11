@@ -17,6 +17,10 @@ const Orders_drinks = db.orders_drinks;
 const Op = db.Op;
 const sequelize = db.sequelize;
 const Drink = db.drinks;
+const Report = db.reports;
+const Customer_reports = db.customers_reports;
+
+
 
 
 
@@ -1396,6 +1400,325 @@ const browseBills = async (req, res)=>{
 
 }
 
+const makeReport = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+    const title  = req.body.title;
+    const description = req.body.description;
+
+
+    if(!title){
+
+
+        return res.status(400).send({msg: "enter title"});
+
+    }
+
+    if (!description) {
+        
+        return res.status(400).send({msg: "enter description"})
+
+    }
+
+    let transaction;
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } 
+
+
+
+
+        transaction = await sequelize.transaction();
+
+
+
+    const report = await Report.create({
+
+        title,
+        description
+
+    },
+    {
+        transaction
+    });
+
+
+    const customer_report = await Customer_reports.create({
+
+        customer_id,
+        report_id: report.report_id
+
+
+    }, {transaction});
+     
+        
+        await transaction.commit();
+        res.status(202).send({report, customer_report});
+        
+    } catch (error) {
+
+        await transaction.rollback();
+        return res.status(401).send({msg: error.message});
+
+        
+    }
+
+
+
+
+}
+
+
+
+const showReports = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } 
+
+        
+    const customer_reports = await Customer_reports.findAll({
+
+    where:{
+        customer_id
+    }
+
+
+    });
+    if (customer_reports.length === 0) {
+        throw new Error("No reports found");
+    }
+
+    const report_id = customer_reports.map(v=> v.report_id);
+
+   
+    const reports = await Report.findAll({
+
+    
+        where:{
+            [Op.or]: {report_id}
+        }
+
+    });
+
+
+     
+        
+        res.status(202).send({reports});
+        
+    } catch (error) {
+
+        return res.status(401).send({msg: error.message});
+
+        
+    }
+
+
+
+
+}
+
+
+
+const viewReport = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+    const report_id = req.params.report_id;
+
+    if (!report_id) {
+        return res.status(400).send({msg: "choose report"});
+
+    }
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } 
+
+        
+
+   
+    const report = await Report.findByPk(report_id);
+
+
+    if (report == null) {
+
+        throw new Error("report not found")
+        
+    }
+
+
+     
+        
+        res.status(202).send({report});
+        
+    } catch (error) {
+
+        return res.status(401).send({msg: error.message});
+
+        
+    }
+
+
+
+
+}
+
+
+const updateReport = async (req, res)=>{
+
+    const {title, description} = req.body;
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+    const report_id = req.params.report_id;
+
+    if (!report_id) {
+        return res.status(400).send({msg: "choose report"});
+
+    }
+    if(!title && !description){
+
+        return res.status(400).send({msg: "update something!!"});
+
+    }
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } 
+
+
+        const report = await Report.findByPk(report_id);
+
+        if (report == null) {
+
+            throw new Error("report not found")
+            
+        }
+
+        if(title){
+            report.title = title;
+        }                                                                                                                                                                       
+        if(description){
+            report.description = description;
+        }
+    
+        
+        await report.save();
+
+        res.status(200).send({report});
+
+    } catch (error) {
+        res.status(401).send({msg: error.message});
+
+    }
+
+}
+
+
+const deleteReport = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+    if (!token) {
+        return res.status(401).send({msg: "not authorized"})
+
+    }
+
+    const report_id = req.params.report_id;
+
+    if (!report_id) {
+        return res.status(400).send({msg: "choose report"});
+
+    }
+
+    try {
+
+        const decodedToken = jwt.verify(token, process.env.SECRET);
+
+        const customer_id = decodedToken.customer_id;
+
+        const customer = await Customer.findByPk(customer_id);
+
+        if (!customer) {
+            throw new Error("customer not found");
+        } 
+
+
+        const report = await Report.findByPk(report_id);
+
+        if (report == null) {
+
+            throw new Error("report not found")
+            
+        }
+        
+        await report.destroy();
+
+        res.status(200).send({report});
+
+    } catch (error) {
+        res.status(401).send({msg: error.message});
+
+    }
+
+}
+
 module.exports = {signUp, login, deleteCustomer, update, changeNumber, changeEmail, resetPassword, forgotPassword,
      makeReservation, setSection, deleteReservation, updateReservation,showEvents, viewReservation, 
-     showReservations, viewEvent, makeOrder, showOrderDetails, updateOrder, deleteOrder, showOrders, browseBills};
+     showReservations, viewEvent, makeOrder, showOrderDetails, updateOrder, 
+     deleteOrder, showOrders, browseBills, makeReport, showReports, viewReport, updateReport, deleteReport};

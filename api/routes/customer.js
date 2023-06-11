@@ -33,6 +33,14 @@ router.put('/update-order', customerController.updateOrder);
 router.delete('/delete-order', customerController.deleteOrder);
 router.get('/show-orders', customerController.showOrders);
 router.get('/browseBills', customerController.browseBills);
+router.post('/make-report', customerController.makeReport);
+router.get('/show-reports', customerController.showReports);
+router.get('/:report_id/view-report', customerController.viewReport);
+router.put('/:report_id/update-report', customerController.updateReport);
+router.delete('/:report_id/delete-report', customerController.deleteReport);
+
+
+
 
 
 
