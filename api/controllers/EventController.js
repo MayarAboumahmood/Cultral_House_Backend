@@ -1,5 +1,8 @@
 const db = require("../Models/index");
 
+const responseMessage = require("../middleware/responseHandler");
+const RError = require("../middleware/error.js");
+
 const Event = db.events;
 
 const createEvent = async (req, res) => {
@@ -105,6 +108,8 @@ const updateEvent = async (req, res) => {
 
 
 }
+
+
 
 module.exports = {
     createEvent,

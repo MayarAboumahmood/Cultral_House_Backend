@@ -1,7 +1,8 @@
 //importing modules
 const dotenv = require('dotenv');
 dotenv.config();
-const {Sequelize, DataTypes, Op} = require('sequelize')
+const {Sequelize, DataTypes, Op, ValidationError} = require('sequelize')
+
 
 const sequelize = new Sequelize(`postgres://postgres:${process.env.DB_PASSWORD}@localhost:5432/test`, {dialect: "postgres"})
 
@@ -16,6 +17,7 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 db.Op = Op;
+db.ValidationError = ValidationError;
 db.admins = require('./admin.js')(sequelize, DataTypes);
 db.customers = require('./customer.js')(sequelize, DataTypes);
 db.workers = require('./worker.js')(sequelize, DataTypes);

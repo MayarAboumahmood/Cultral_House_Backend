@@ -6,7 +6,14 @@ const admins = require("./api/routes/admin");
 const db = require('./api/models/index');
 const customers = require("./api/routes/customer");
 const drinks = require("./api/routes/drink");
-const cors = require('cors')
+const reports = require("./api/routes/report");
+const orders = require("./api/routes/order");
+const reservations = require("./api/routes/reservation");
+
+
+
+
+const cors = require('cors');
 
 dotenv.config();
 
@@ -25,6 +32,9 @@ app.use(bodyParser.json());
 app.use('/admins', admins);
 app.use('/customers', customers);
 app.use('/drinks', drinks);
+app.use('/reports', reports);
+app.use('/orders', orders);
+app.use('/reservations', reservations);
 
 app.use(express.json())
 
