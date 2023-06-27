@@ -6,8 +6,6 @@ dotenv.config();
 
 const Drink = db.drinks;
 
-
-
 const addDrink = async (req, res)=>{
 
     //need to add worker and admin authentication (JWT) ?
@@ -38,7 +36,6 @@ const addDrink = async (req, res)=>{
     }
 
 }
-
 
 const showDrinks = async (req, res)=>{
 

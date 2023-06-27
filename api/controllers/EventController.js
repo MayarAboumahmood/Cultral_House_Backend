@@ -1,10 +1,22 @@
 const db = require("../Models/index");
 
 const Event = db.events;
+const Artist = db.events;
+const Artist_Event = db.artists_events
 
 const createEvent = async (req, res) => {
     try {
-        const {title, description, ticket_price, available_places, band_name, begin_date, admin_id} = req.body;
+        const {
+            title,
+            description,
+            ticket_price,
+            available_places,
+            band_name,
+            begin_date,
+            admin_id,
+            artist_id
+        } = req.body;
+
         const data = {
             title,
             description,
@@ -12,14 +24,39 @@ const createEvent = async (req, res) => {
             available_places,
             band_name,
             begin_date,
-            admin_id
+            admin_id,
         };
 
         const event = await Event.create(data);
+
+
+        await db.sequelize.transaction(async (t) => {
+            try {
+                for (const ar_id of artist_id) {
+                    const artist = await Artist.findByPk(1)
+                    if (!artist) {
+                        throw new Error("artist not found" + ar_id)
+                    }
+                    const artist_event = await Artist_Event.create({
+                        artist_id: ar_id,
+                        event_id: event.event_id,
+                        cost: 100
+                    }, {transaction: t})
+                }
+            } catch (e) {
+                console.log("rolling back")
+                console.log(e)
+                t.rollback()
+            }
+        });
+
+
         return res.status(201).json({
             msg: "event created successfully",
             data: event
         });
+
+
     } catch (error) {
         res.status(400).json({
             req: req.body,
@@ -71,18 +108,18 @@ const updateEvent = async (req, res) => {
 
     const event = await Event.findByPk(req.body.event_id);
     if (event != null) {
-        const {title,description,ticket_price,available_places,begin_date,band_name} = req.body
-        if (title!=null)
+        const {title, description, ticket_price, available_places, begin_date, band_name} = req.body
+        if (title != null)
             event.title = title
-        if(description!=null)
-            event.description=description
-        if(ticket_price!=null)
-            event.ticket_price=ticket_price
-        if(available_places!=null)
-            event.available_places=available_places
-        if(begin_date!=null)
+        if (description != null)
+            event.description = description
+        if (ticket_price != null)
+            event.ticket_price = ticket_price
+        if (available_places != null)
+            event.available_places = available_places
+        if (begin_date != null)
             event.begin_date = begin_date
-        if(band_name!=null)
+        if (band_name != null)
             event.band_name = band_name
 
         try {
@@ -94,7 +131,7 @@ const updateEvent = async (req, res) => {
         } catch (e) {
             return res.status(400).json({
                 msg: e,
-                requestBody:req.body
+                requestBody: req.body
             })
         }
 
