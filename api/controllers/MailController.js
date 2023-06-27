@@ -24,7 +24,7 @@ const sendEmail = (to, subject, text) => {
       if (error) {
         reject(error.message);
       } else {
-        resolve('Email sent: ' + info.response);
+        resolve('check your mail');
       }
     });
   });
