@@ -6,14 +6,14 @@ const admins = require("./api/routes/admin");
 const db = require('./api/models/index');
 const customers = require("./api/routes/customer");
 const drinks = require("./api/routes/drink");
+const events = require("./api/routes/event")
+const artists = require("./api/routes/artist")
+const workers = require("./api/routes/worker")
 const reports = require("./api/routes/report");
 const orders = require("./api/routes/order");
 const reservations = require("./api/routes/reservation");
-
-
-
-
 const cors = require('cors');
+
 
 dotenv.config();
 
@@ -32,6 +32,10 @@ app.use(bodyParser.json());
 app.use('/admins', admins);
 app.use('/customers', customers);
 app.use('/drinks', drinks);
+
+app.use('/events', events);
+app.use('/artist', artists);
+app.use("/worker",workers)
 app.use('/reports', reports);
 app.use('/orders', orders);
 app.use('/reservations', reservations);

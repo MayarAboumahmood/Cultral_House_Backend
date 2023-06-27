@@ -1,12 +1,18 @@
-const express = require('express');
+
+const express = require('express')
+const eventController = require('../controllers/EventController')
+const checkAuth = require('../middleware/checkAuth')
+
+const router = express.Router()
 
 
+router.post('/create', checkAuth.getAdminId, eventController.createEvent);
 
+router.get('/show-all', eventController.showAllEvents)
 
-const router = express.Router();
+router.delete('/delete', eventController.deleteEvent)
 
-const eventController = require('../controllers/EventController');
-
+router.put('/update', eventController.updateEvent)
 
 //router.get('/events/:event_id', eventController.viewEvent);
 

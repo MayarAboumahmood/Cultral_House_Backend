@@ -8,8 +8,6 @@ const fs = require('fs');
 const Drink = db.drinks;
 const ValidationError = db.ValidationError;
 
-
-
 const addDrink = async (req, res)=>{
 
     //need to add worker and admin authentication (JWT) ?
@@ -51,7 +49,6 @@ const addDrink = async (req, res)=>{
     }
 
 }
-
 
 const showDrinks = async (req, res)=>{
 
