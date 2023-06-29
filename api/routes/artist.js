@@ -6,4 +6,7 @@ const router = express.Router()
 
 router.post("/create",checkAuth.checkIfSuper,artistController.createArtist);
 router.delete('/delete',checkAuth.checkIfSuper,artistController.deleteArtist);
+router.get("/show-all",artistController.showAll)
+router.get("/show",artistController.showArtist)
+
 module.exports = router

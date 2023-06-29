@@ -41,8 +41,48 @@ const deleteArtist = async (req, res) => {
     }
 }
 
+const showAll = async (req, res) => {
+    const artists = await Artist.findAll()
+    if (!artists) {
+        return res.status(200).json({
+                msg: "No Artists Has Been Added",
+                data: null
+            }
+        )
+    } else {
+        return res.status(200).json({
+            msg: artists.length + " Artists has been found",
+            data: artists
+        })
+    }
+}
+
+const showArtist = async (req, res) => {
+    if (!req.body.artist_id) {
+        return res.status(400).json({
+            msg: "You did`nt provide artist_id",
+            data: null
+        })
+    }
+
+    const artist = await Artist.findByPk(req.body.artist_id)
+    if (!artist) {
+        return res.status(404).json({
+            msg: "Artist Not Found",
+            data: null
+        })
+    } else {
+        return res.status(200).json({
+            msg: "Artist Has Been found",
+            data: artist
+        })
+    }
+}
+
 
 module.exports = {
     createArtist,
-    deleteArtist
+    deleteArtist,
+    showAll,
+    showArtist
 }
