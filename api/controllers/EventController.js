@@ -61,11 +61,11 @@ const createEvent = async (req, res) => {
                 })
             }
         }
-
+        console.log(req.files)
 
         return res.status(201).json({
             msg: "event created successfully",
-            data: [event, "number of files : " + req.files.length]
+            data: event
         });
 
 
