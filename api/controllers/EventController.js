@@ -63,7 +63,7 @@ const createEvent = async (req, res) => {
     } catch (error) {
         res.status(400).json({
             req: req.body,
-            msg: error.name
+            msg: error.toString()
         })
         console.log(error);
     }
