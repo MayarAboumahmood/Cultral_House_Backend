@@ -1,11 +1,11 @@
 const db = require("../Models/index");
 
-const responseMessage = require("../middleware/responseHandler");
-const RError = require("../middleware/error.js");
 
 const Event = db.events;
 const Artist = db.events;
 const Artist_Event = db.artists_events
+const Photos = db.photos
+
 
 const createEvent = async (req, res) => {
     try {
@@ -53,16 +53,25 @@ const createEvent = async (req, res) => {
             }
         });
 
+        if (req.files) {
+            for (let i = 0; i < req.files.length; i++) {
+                Photos.create({
+                    event_id: event.event_id,
+                    picture: req.files[i].path
+                })
+            }
+        }
+
 
         return res.status(201).json({
             msg: "event created successfully",
-            data: event
+            data: [event, "number of files : " + req.files.length]
         });
 
 
     } catch (error) {
         res.status(400).json({
-            req: req.body,
+            req: [req.body, req.files.length + "number of files"],
             msg: error.toString()
         })
         console.log(error);
@@ -145,7 +154,6 @@ const updateEvent = async (req, res) => {
 
 
 }
-
 
 
 module.exports = {
