@@ -19,7 +19,6 @@ const createEvent = async (req, res) => {
             admin_id,
             artist_id
         } = req.body;
-
         const data = {
             title,
             description,
@@ -31,12 +30,13 @@ const createEvent = async (req, res) => {
         };
 
         const event = await Event.create(data);
+        const artists = JSON.parse(artist_id)
 
 
         await db.sequelize.transaction(async (t) => {
             try {
-                for (const ar_id of artist_id) {
-                    const artist = await Artist.findByPk(ar_id)
+                for (const ar_id of artists) {
+                    const artist = await Artist.findByPk(1)
                     if (!artist) {
                         throw new Error("artist not found" + ar_id)
                     }
