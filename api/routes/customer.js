@@ -1,5 +1,4 @@
 const express = require('express');
-const upload = require('../middleware/upload')
 const checkIfEmpty = require('../middleware/emptyUpdate')
 const checkCredentials = require('../middleware/checkCredentials')
 
@@ -11,10 +10,10 @@ const router = express.Router();
 const customerController = require('../controllers/CustomerController');
 
 
-router.post('/signup', upload('customers').single('picture'), checkCredentials,customerController.signUp);
+router.post('/signup', checkCredentials,customerController.signUp);
 router.post('/login',checkCredentials,customerController.login);
 router.delete('/delete',customerController.deleteCustomer);
-router.put('/update', upload('customers').single('picture'), checkIfEmpty, customerController.update);
+router.put('/update', checkIfEmpty, customerController.update);
 router.put('/change-number', customerController.changeNumber);
 router.put('/change-email', customerController.changeEmail);
 router.put('/reset-password', customerController.resetPassword);

@@ -25,10 +25,6 @@ module.exports = (sequelize, DataTypes) => {
                 }
               }
         },
-        picture: {
-            type: DataTypes.STRING,
-           
-        },
         phone_number: {
             type: DataTypes.STRING,
             unique: {

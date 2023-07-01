@@ -3,7 +3,6 @@ const dotenv = require('dotenv');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sendEmail = require('./MailController');
-const fs = require('fs');
 
 const { consumers } = require("stream");
 const { resolve } = require("path/win32");
@@ -23,10 +22,6 @@ const signUp = async (req, res) => {
 
     const {first_name, last_name, email, phone_number, password, birthdate} = req.body;
 
-    if (!req.file) {
-        return res.status(400).send(responseMessage(false, "img is required"));
-    }
-    const picture = req.file.path;
 
      Customer.create({
         first_name,
@@ -35,14 +30,11 @@ const signUp = async (req, res) => {
         email,
         password: await bcrypt.hash(password, 10),
         birthdate,
-        picture
     }).then((data) => {
 
         res.status(201).send(responseMessage(true,"customer is registered" ,data));
 
     }).catch(({errors}) => {
-
-        fs.unlinkSync(picture);
 
         var statusCode = errors.statusCode || 500;
         if (errors instanceof ValidationError) {
@@ -120,7 +112,6 @@ const deleteCustomer = async (req, res) => {
 
 
              await customer.destroy();
-             fs.unlinkSync(customer.picture);
 
             res.status(200).send(responseMessage(true,  "customer has been deleted successfully")
             );
@@ -144,12 +135,7 @@ const update = async (req, res) => {
     const token = req.headers["x-access-token"];
 
 
-    const file = req.file;
-    let picture;
-    if (file) {
-        picture = file.path;
-    }
-
+  
     try {
 
         const customer = await customerAuth(token);
@@ -166,22 +152,7 @@ const update = async (req, res) => {
             if (birthdate) {
                 customer.birthdate = birthdate;
             }
-            if (picture) {
-
-
-                if (fs.existsSync(customer.picture)) {
-
-                    fs.unlinkSync(customer.picture);
-
-
-                }
-
-
-                
-                customer.picture = picture;
-
-            
-            }
+          
         
         await customer.save();
         res.status(200).send(responseMessage(true,  "customer has been updated successfully", customer));
