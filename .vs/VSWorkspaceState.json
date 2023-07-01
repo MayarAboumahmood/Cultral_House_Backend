@@ -2,8 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\api",
-    "\\api\\controllers"
+    "\\api\\controllers",
+    "\\api\\routes"
   ],
-  "SelectedNode": "\\api\\controllers\\OrderController.js",
   "PreviewInSolutionExplorer": false
 }

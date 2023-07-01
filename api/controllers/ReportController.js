@@ -168,7 +168,7 @@ const viewReport = async (req, res)=>{
 
     const token = req.headers["x-access-token"];
    
-    const report_id = req.params.report_id;
+    const report_id = req.body.report_id;
 
     if (!report_id) {
         return res.status(400).send(responseMessage(false, "choose report"));
@@ -216,7 +216,7 @@ const updateReport = async (req, res)=>{
     const token = req.headers["x-access-token"];
     
 
-    const report_id = req.params.report_id;
+    const report_id = req.body.report_id;
 
     if (!report_id) {
         return res.status(400).send(responseMessage(false, "choose report"));
@@ -268,7 +268,7 @@ const deleteReport = async (req, res)=>{
     const token = req.headers["x-access-token"];
 
 
-    const report_id = req.params.report_id;
+    const report_id = req.body.report_id;
 
     if (!report_id) {
         return res.status(400).send(responseMessage(false, "choose report"));

@@ -73,7 +73,7 @@ const showDrinks = async (req, res)=>{
 
 const viewDrink = async (req, res)=>{
 
-    const drink_id = req.params.drink_id;
+    const drink_id = req.body.drink_id;
     if (!drink_id) {
         
         return res.status(400).send(responseMessage(false,"choose drink to show"));
@@ -109,7 +109,7 @@ const updateDrink = async (req, res)=>{
 
     //need to add worker and admin authentication (JWT) ? in the drinkUpload middleware 
     const {title, description, price,quantity, cost} = req.body;
-    const drink_id = req.params.drink_id;
+    const drink_id = req.body.drink_id;
 
 
     try {

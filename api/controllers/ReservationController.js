@@ -25,7 +25,7 @@ const makeReservation = async (req, res)=>
 
     try {
         
-        const event_id = req.params.event_id;
+        const event_id = req.body.event_id;
 
         if (!event_id) {
             throw new RError(400, "choose the event");
@@ -104,7 +104,7 @@ const setSection = async (req, res)=>
 
     try {
         
-        const reservation_id = req.params.reservation_id;
+        const reservation_id = req.body.reservation_id;
         const section_number = req.body.section_number;
 
 
@@ -185,7 +185,7 @@ const deleteReservation = async (req, res)=>{
 
         transaction = await sequelize.transaction();
 
-        const reservation_id = req.params.reservation_id;
+        const reservation_id = req.body.reservation_id;
 
         if (!reservation_id) {
             throw new RError(400, "choose the reservation");
@@ -254,10 +254,13 @@ const updateReservation = async (req, res)=>{
     let transaction;
     try {
         
-        const reservation_id = req.params.reservation_id;
+        const reservation_id = req.body.reservation_id;
         const number_of_places = req.body.number_of_places;
 
 
+        transaction = await sequelize.transaction();
+
+        
         if (!reservation_id) {
             throw new RError(400, "choose the reservation");
         }
@@ -278,7 +281,6 @@ const updateReservation = async (req, res)=>{
 
     }
 
-    transaction = await sequelize.transaction();
 
 
         const customer = await customerAuth(token);
@@ -386,7 +388,7 @@ const viewReservation = async (req, res)=>{
 
     const token = req.headers["x-access-token"];
    
-    const reservation_id = req.params.reservation_id;
+    const reservation_id = req.body.reservation_id;
 
     if (!reservation_id) {
         

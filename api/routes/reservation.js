@@ -10,12 +10,12 @@ const router = express.Router();
 
 const reservationController = require('../controllers/ReservationController.js');
 
-router.post('/:event_id/make-reservation', reservationController.makeReservation);
-router.post('/:reservation_id/setSection', reservationController.setSection);
-router.delete('/:reservation_id/delete', reservationController.deleteReservation);
-router.put('/:reservation_id/update', reservationController.updateReservation);
+router.post('/make-reservation', reservationController.makeReservation);
+router.post('/setSection', reservationController.setSection);
+router.delete('/delete', reservationController.deleteReservation);
+router.put('/update', reservationController.updateReservation);
 router.get('/', reservationController.showReservations);
-router.get('/:reservation_id/view', reservationController.viewReservation);
+router.get('/view', reservationController.viewReservation);
 router.get('/events', reservationController.showEvents);
 
 

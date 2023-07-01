@@ -112,7 +112,7 @@ const showOrderDetails = async (req, res)=>{
     const token = req.headers["x-access-token"];
   
 
-    const order_id = req.params.order_id;
+    const order_id = req.body.order_id;
 
 
     if (!order_id) {
@@ -172,7 +172,7 @@ const updateOrder = async (req, res)=>{
     const token = req.headers["x-access-token"];
   
     const drinks  = req.body.drinks;
-    const order_id = req.params.order_id;
+    const order_id = req.body.order_id;
 
 
     if(!order_id){
@@ -232,7 +232,7 @@ const updateOrder = async (req, res)=>{
         }
         
         await transaction.commit();
-        res.status(200).send(responseMessage(true, "order is retrieved", ODS));        
+        res.status(200).send(responseMessage(true, "order is updated", ODS));        
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
@@ -251,7 +251,7 @@ const deleteOrder = async (req, res)=>{
 
     const token = req.headers["x-access-token"];
   
-    const order_id = req.params.order_id;
+    const order_id = req.body.order_id;
 
 
     if (!order_id) {

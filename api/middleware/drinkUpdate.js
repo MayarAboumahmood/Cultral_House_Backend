@@ -4,7 +4,7 @@ const responseMessage = require("./responseHandler");
 const checkIfEmpty = (req, res, next)=>
 {
     const {title, description, price,quantity, cost} = req.body;
-    const drink_id = req.params.drink_id;       
+    const drink_id = req.body.drink_id;       
   
     if(!drink_id || !Number(drink_id))
     {

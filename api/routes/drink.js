@@ -11,8 +11,8 @@ const drinkController = require('../controllers/DrinksController');
 
 router.post('/add',upload("drinks").single("picture"), drinkController.addDrink);
 router.get('/', drinkController.showDrinks);
-router.get('/:drink_id', drinkController.viewDrink);
-router.put('/:drink_id/update', checkIfEmpty, drinkController.updateDrink);
+router.get('/view', drinkController.viewDrink);
+router.put('/update', checkIfEmpty, drinkController.updateDrink);
 
 
 module.exports = router;
