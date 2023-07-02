@@ -4,9 +4,7 @@ const db = require("../Models/index");
 
 const RError = require("./error.js");
 
-// const dotenv = require('dotenv');
 
-// //dotenv.config();
 const Customer = db.customers;
 
 

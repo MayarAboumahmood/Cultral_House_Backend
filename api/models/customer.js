@@ -63,30 +63,6 @@ module.exports = (sequelize, DataTypes) => {
                 }
               }
         },
-        birthdate: {
-            type: DataTypes.DATEONLY,
-            allowNull: false,
-            
-            validate: {
-                notNull: {
-                  msg: 'Please enter your birth date'
-                },
-                isDate: {
-                    arg: true,
-                    msg : "please enter a valid date!"
-                },
-                isUnderTen(value) {
-                    const currentDate = new Date();
-                    const birthdate = new Date(value);
-                    const age = currentDate.getFullYear() - birthdate.getFullYear();
-            
-                    if (age < 10) {
-                      throw new Error('Grow faster!!');
-                    }
-                  },
-              }
-        },
-     
     },
      {timestamps: true},)
 }

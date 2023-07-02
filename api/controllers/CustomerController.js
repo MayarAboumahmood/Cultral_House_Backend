@@ -20,7 +20,7 @@ const Op = db.Op;
 
 const signUp = async (req, res) => {
 
-    const {first_name, last_name, email, phone_number, password, birthdate} = req.body;
+    const {first_name, last_name, email, phone_number, password} = req.body;
 
 
      Customer.create({
@@ -29,7 +29,6 @@ const signUp = async (req, res) => {
         phone_number,
         email,
         password: await bcrypt.hash(password, 10),
-        birthdate,
     }).then((data) => {
 
         res.status(201).send(responseMessage(true,"customer is registered" ,data));
@@ -131,7 +130,7 @@ const deleteCustomer = async (req, res) => {
 const update = async (req, res) => {
 
 
-    const {first_name, last_name, birthdate} = req.body;
+    const {first_name, last_name} = req.body;
     const token = req.headers["x-access-token"];
 
 
@@ -148,11 +147,6 @@ const update = async (req, res) => {
             if (last_name) {
                 customer.last_name = last_name;
             }
-
-            if (birthdate) {
-                customer.birthdate = birthdate;
-            }
-          
         
         await customer.save();
         res.status(200).send(responseMessage(true,  "customer has been updated successfully", customer));
