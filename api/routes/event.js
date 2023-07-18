@@ -16,5 +16,7 @@ router.put('/update', eventController.updateEvent)
 
 //router.get('/events/:event_id', eventController.viewEvent);
 
+router.get('/show-upcoming-events', eventController.showUpComingEventsForCustomer)
+
 
 module.exports = router;

@@ -5,6 +5,7 @@ const Event = db.events;
 const Artist = db.events;
 const Artist_Event = db.artists_events
 const Photos = db.photos
+const Op = db.Op;
 
 
 const createEvent = async (req, res) => {
@@ -155,10 +156,23 @@ const updateEvent = async (req, res) => {
 
 }
 
+const showUpComingEventsForCustomer = async (req, res) => {
+    const events = await Event.findAll({where : {
+        begin_date : {
+            [Op.gt]: Date()
+        }
+    }});
+    res.status(200).json({
+        msg: "events has been sent successfully",
+        data: events
+    })
+}
+
 
 module.exports = {
     createEvent,
     showAllEvents,
     deleteEvent,
-    updateEvent
+    updateEvent,
+    showUpComingEventsForCustomer
 }
