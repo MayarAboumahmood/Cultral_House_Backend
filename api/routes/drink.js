@@ -13,6 +13,8 @@ router.post('/add',upload("drinks").single("picture"), drinkController.addDrink)
 router.get('/', drinkController.showDrinks);
 router.get('/view', drinkController.viewDrink);
 router.put('/update', checkIfEmpty, drinkController.updateDrink);
+router.delete('/delete', drinkController.deleteDrink);
+
 
 
 module.exports = router;

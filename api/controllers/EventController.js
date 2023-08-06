@@ -1,5 +1,6 @@
 const db = require("../Models/index");
 
+const date = require('date-and-time')
 
 const Event = db.events;
 const Artist = db.events;
@@ -30,6 +31,7 @@ const createEvent = async (req, res) => {
             begin_date,
             admin_id,
         };
+        const value = date.format(now,'YYYY/MM/DD HH:mm:ss');//nedded to format the date
 
         const event = await Event.create(data);
         const artists = JSON.parse(artist_id)
@@ -160,16 +162,61 @@ const updateEvent = async (req, res) => {
 const showUpComingEventsForCustomer = async (req, res) => {
     const events = await Event.findAll({where : {
         begin_date : {
-            [Op.gt]: Date()
+            [Op.gt]:date.format(Date(),'YYYY/MM/DD HH:mm:ss')
         }
     }});
+
     res.status(200).json({
         msg: "events has been sent successfully",
         data: events
     })
 }
 
+// const showPastEventsForCustomer = async (req, res) => {
+//     const events = await Event.findAll({where : {
+//         begin_date : {
+//             [Op.ls]: date.format(Date(),'YYYY/MM/DD HH:mm:ss')
+//         }
+//     }});
+//     res.status(200).json({
+//         msg: "events has been sent successfully",
+//         data: events
+//     })
+// }
 
+// const showNowEventsForCustomer = async (req, res) => {
+//     const events = await Event.findAll({where : {
+//         begin_date : {
+//             [Op.eq]: date.format(Date(),'YYYY/MM/DD HH:mm:ss')
+//         }
+//     }});
+
+//     res.status(200).json({
+//         msg: "events has been sent successfully",
+//         data: events
+//     })
+// }
+
+// const showEventsForCustomer = async (req, res) => {
+//     const events = await Event.findAll();
+//     const past = {};
+//     const upComing = {};
+//     const now = {};
+
+//     for (let index = 0; index < events.length; index++) {
+//         const element = array[index];
+//         if (element.begin_date === ) {
+            
+//         }
+        
+//     }
+
+
+//     res.status(200).json({
+//         msg: "events has been sent successfully",
+//         data: events
+//     })
+// }
 module.exports = {
     createEvent,
     showAllEvents,

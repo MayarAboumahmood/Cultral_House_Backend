@@ -164,5 +164,38 @@ const updateDrink = async (req, res)=>{
 
 }
 
-module.exports = {addDrink, showDrinks, viewDrink, updateDrink};
+
+const deleteDrink = async (req, res)=>{
+
+    //need to add worker and admin authentication (JWT) ? in the drinkUpload middleware 
+    const drink_id = req.body.drink_id;
+
+
+    try {
+
+        const drink = await Drink.findByPk(drink_id);
+
+        if (drink == null) {
+
+            throw new RError(404, "drink not found")
+            
+        }
+     
+      
+        
+        await drink.destroy();
+
+        res.status(200).send(responseMessage(true, "drink has been deleted"));
+
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
+
+    }
+
+}
+
+module.exports = {addDrink, showDrinks, viewDrink, updateDrink, deleteDrink};
 

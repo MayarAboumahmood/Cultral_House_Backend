@@ -86,7 +86,7 @@ const deleteAdmin = async (req, res) => {
     })
     if (admin) {
 
-        admin.destroy()
+       await admin.destroy()
 
         return res.status(202).json({
             msg: "admin has been deleted successfully",
@@ -117,3 +117,4 @@ module.exports = {
 
 };
 
+                                                                                                                                        
