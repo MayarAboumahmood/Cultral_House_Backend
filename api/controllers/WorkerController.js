@@ -2,6 +2,11 @@ const db = require("../Models/index");
 const { unlinkSync } = require('fs');
 
 const Worker = db.workers;
+const workers_events = db.workers_events;
+const Event = db.events;
+const Op = db.Op;
+
+
 
 
 const createWorker = async (req, res) => {
@@ -86,12 +91,27 @@ const showWorkerDetails = async (req, res) => {
         where:{worker_id}
     })
 
+    const we = await workers_events.findAll({where:{
+        worker_id
+    }});
+
+    if (we != null) {
+
+        const event_id = we.map(v => v.event_id);
+          
+        const events = await Event.findAll({
+            where: {
+                [Op.or]: { event_id },
+            },
+        });
+    
+        const data = {worker, events};
     res.status(200).json({
-        msg: "workers has been sent successfully",
-        data: worker
+        msg: "worker has been sent successfully",
+        data: data
     })
 }
-
+}
 
 module.exports = {
     createWorker,
