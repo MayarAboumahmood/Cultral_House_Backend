@@ -1,6 +1,5 @@
 const db = require("../Models/index");
 
-const date = require('date-and-time')
 
 const Event = db.events;
 const Artist = db.events;

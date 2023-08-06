@@ -10,7 +10,7 @@ router.get('/show-all', checkAuth.checkIfSuper, workerController.showAllWorkers)
 router.post('/create', checkAuth.checkIfSuper, upload('workers').single('image'), checkAuth.checkWorker, workerController.createWorker)
 
 router.delete('/delete', checkAuth.checkIfSuper, workerController.deleteWorker)
-router.get('/show-worker-details', checkAuth.checkIfSuper, workerController.showWorkerDetails)
+router.get('/show-worker-details/:worker_id', checkAuth.checkIfSuper, workerController.showWorkerDetails)
 
 
 

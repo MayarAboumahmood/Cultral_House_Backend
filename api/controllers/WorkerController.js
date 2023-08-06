@@ -85,7 +85,7 @@ const deleteWorker = async (req, res) => {
 
 }
 const showWorkerDetails = async (req, res) => {
-    const worker_id = req.body.worker_id;
+    const worker_id = req.params.worker_id;
 
     const worker = await Worker.findOne({
         where:{worker_id}
