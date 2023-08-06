@@ -18,7 +18,8 @@ const createEvent = async (req, res) => {
             band_name,
             begin_date,
             admin_id,
-            artist_id
+            artist_id,
+            cost
         } = req.body;
         const data = {
             title,
@@ -37,7 +38,7 @@ const createEvent = async (req, res) => {
         await db.sequelize.transaction(async (t) => {
             try {
                 for (const ar_id of artists) {
-                    const artist = await Artist.findByPk(1)
+                    const artist = await Artist.findByPk(ar_id)
                     if (!artist) {
                         throw new Error("artist not found" + ar_id)
                     }

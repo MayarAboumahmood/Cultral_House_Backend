@@ -79,10 +79,23 @@ const deleteWorker = async (req, res) => {
     }
 
 }
+const showWorkerDetails = async (req, res) => {
+    const worker_id = req.body.worker_id;
+
+    const worker = await Worker.findOne({
+        where:{worker_id}
+    })
+
+    res.status(200).json({
+        msg: "workers has been sent successfully",
+        data: worker
+    })
+}
 
 
 module.exports = {
     createWorker,
     showAllWorkers,
-    deleteWorker
+    deleteWorker,
+    showWorkerDetails
 }
