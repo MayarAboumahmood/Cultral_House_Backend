@@ -2,6 +2,16 @@ const bcrypt = require("bcrypt");
 const db = require("../Models/index");
 const jwt = require("jsonwebtoken");
 
+const responseMessage = require("../middleware/responseHandler");
+const RError = require("../middleware/error.js");
+const adminAuth = require("../middleware/adminAuth");
+
+
+const Reservation = db.reservations;
+const Event = db.events;
+const ValidationError = db.ValidationError;
+const sequelize = db.sequelize;
+
 const Admin = db.admins;
 
 const createAdmin = async (req, res) => {
@@ -108,12 +118,151 @@ const showAllAdmins = async (req, res) => {
     })
 }
 
+const makeReservationByAdmin = async(req, res)=>{
+
+    const token = req.headers["x-access-token"];
+
+
+    try {
+        
+        const event_id = req.body.event_id;
+        const customer_name =req.body.customer_name;
+
+
+        if (!event_id) {
+            throw new RError(400, "choose the event");
+        }
+    
+
+    const number_of_places = req.body.number_of_places;
+
+    if (!number_of_places) {
+
+        throw new RError(400, "enter the number of the attendees");
+
+    }
+
+    const admin = await adminAuth(token);
+
+    const admin_id = admin.admin_id;
+
+    const event = await Event.findByPk(event_id);
+
+    
+    if (event == null) {
+
+        throw new RError(404, "event not found");
+
+    }
+
+    if (number_of_places < 1) {
+        throw new RError(400, "enter a valid number");
+
+    }
+
+    if (number_of_places > event.available_places) {
+        throw new RError(400, "no enough spots in the events");
+
+    }
+
+    event.available_places -= number_of_places;
+
+   const reservation = await Reservation.create({
+        event_id,
+        number_of_places,
+        customer_id:null,
+        customer_name
+
+    });
+
+    await event.save();
+
+    res.status(201).send(responseMessage(true, "reservation has been added", reservation));
+   
+
+    } catch (errors) {
+
+        var statusCode = errors.statusCode || 500;
+        if (errors instanceof ValidationError) {
+
+            statusCode = 400;
+            
+        }
+
+        return res.status(statusCode).send(responseMessage(false, errors.message));
+
+    }
+
+}
+
+const deleteReservationByAdmin = async (req, res)=>{
+
+    const token = req.headers["x-access-token"];
+
+
+    let transaction;
+    try {
+
+        transaction = await sequelize.transaction();
+
+        const reservation_id = req.body.reservation_id;
+
+        if (!reservation_id) {
+            throw new RError(400, "choose the reservation");
+        }
+
+      
+        const reservation = await Reservation.findByPk(reservation_id);
+
+        if (reservation === null) {
+
+            throw new RError(404, "reservation not found");
+    
+        }
+
+
+        const admin = await adminAuth(token);
+
+        const admin_id = admin.admin_id;
+    
+
+            const event_id = reservation.event_id;
+
+            const number_of_places = reservation.number_of_places;
+            const event = await Event.findByPk(event_id);
+
+            event.available_places += number_of_places;
+
+            await reservation.destroy({transaction});
+            await event.save({ transaction });
+
+            await transaction.commit();
+            
+            res.status(200).send(responseMessage(true,"reservation has been deleted successfully"));        
+
+
+    } catch (error) {
+
+
+        await transaction.rollback();
+    
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+    
+        
+    }
+
+
+
+}
 
 module.exports = {
     createAdmin,
     login,
     deleteAdmin,
     showAllAdmins,
+    makeReservationByAdmin,
+    deleteReservationByAdmin
 
 };
 

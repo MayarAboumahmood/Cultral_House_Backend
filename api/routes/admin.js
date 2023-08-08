@@ -1,7 +1,6 @@
 //importing modules
 const express = require('express')
 const adminController = require('../controllers/AdminController')
-const workerController = require('../controllers/WorkerController')
 const checkAuth = require('../middleware/checkAuth')
 const upload = require('../middleware/upload')
 
@@ -15,6 +14,8 @@ router.delete('/delete', checkAuth.checkIfSuper, adminController.deleteAdmin)
 
 router.get('/show-all', checkAuth.checkIfSuper, adminController.showAllAdmins)
 
+router.post('/make-reservation',  checkAuth.checkIfSuper, adminController.makeReservationByAdmin)
 
+router.delete('/delete-reservation',  checkAuth.checkIfSuper, adminController.deleteReservationByAdmin)
 
 module.exports = router;

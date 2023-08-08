@@ -82,14 +82,6 @@ const createEvent = async (req, res) => {
 
 }
 
-const showAllEvents = async (req, res) => {
-    const events = await Event.findAll()
-    res.status(200).json({
-        msg: "events has been sent successfully",
-        data: events
-    })
-}
-
 const deleteEvent = async (req, res) => {
     const event_id = req.body.event_id;
 
@@ -158,68 +150,79 @@ const updateEvent = async (req, res) => {
 
 }
 
-const showUpComingEventsForCustomer = async (req, res) => {
-    const events = await Event.findAll({where : {
-        begin_date : {
-            [Op.gt]:date.format(Date(),'YYYY/MM/DD HH:mm:ss')
-        }
-    }});
 
+
+const showAllEvents = async (req, res) => {
+
+    var events = await Event.findAll();
+    const past = [];
+    const upComing = [];
+    const now = [];
+
+    const eventDurstionInHours = 4;
+    const ctDate = new Date().toLocaleString("en", {hour12: false});
+
+    const currentDateArray = ctDate.split(/[,:]/);
+
+       const currentDate = currentDateArray[0];
+       const currentHours = currentDateArray[1];
+       const currentMinutes = currentDateArray[2];
+
+
+    //2023-08-07 15:00
+    for (let index = 0; index < events.length; index++) {
+        var event = events[index].toJSON();
+        const dateObject = new Date(event.begin_date);
+        const date = dateObject.toLocaleString("en", {hour12: false});
+        const dateArray = date.split(/[,:]/);
+
+       const eventDate = dateArray[0];
+       const eventHours = dateArray[1];
+       const eventMinutes = dateArray[2];     
+
+         event.begin_date = date;
+
+
+        if (currentDate < eventDate) {
+
+            upComing.push(event);
+            
+        }
+        else if (currentDate > eventDate) {
+            
+            past.push(event);
+        }
+        else{
+           
+            const eventDurationInMinutes = eventDurstionInHours * 60;
+      
+            const currentTimeInMinutes = currentHours * 60 + Number(currentMinutes);
+
+            const eventTimeInMinutes = eventHours * 60 + Number(eventMinutes);
+
+            const eventEndTimeInMinutes = eventTimeInMinutes + Number(eventDurationInMinutes);
+
+      
+            if (currentTimeInMinutes < eventTimeInMinutes) {
+              upComing.push(event);
+            } else if (currentTimeInMinutes >= eventEndTimeInMinutes) {
+              past.push(event);
+            } else {
+              now.push(event);
+            }
+          }
+        
+    }
+
+    events = {past, now, upComing};
     res.status(200).json({
         msg: "events has been sent successfully",
         data: events
     })
 }
-
-// const showPastEventsForCustomer = async (req, res) => {
-//     const events = await Event.findAll({where : {
-//         begin_date : {
-//             [Op.ls]: date.format(Date(),'YYYY/MM/DD HH:mm:ss')
-//         }
-//     }});
-//     res.status(200).json({
-//         msg: "events has been sent successfully",
-//         data: events
-//     })
-// }
-
-// const showNowEventsForCustomer = async (req, res) => {
-//     const events = await Event.findAll({where : {
-//         begin_date : {
-//             [Op.eq]: date.format(Date(),'YYYY/MM/DD HH:mm:ss')
-//         }
-//     }});
-
-//     res.status(200).json({
-//         msg: "events has been sent successfully",
-//         data: events
-//     })
-// }
-
-// const showEventsForCustomer = async (req, res) => {
-//     const events = await Event.findAll();
-//     const past = {};
-//     const upComing = {};
-//     const now = {};
-
-//     for (let index = 0; index < events.length; index++) {
-//         const element = array[index];
-//         if (element.begin_date === ) {
-            
-//         }
-        
-//     }
-
-
-//     res.status(200).json({
-//         msg: "events has been sent successfully",
-//         data: events
-//     })
-// }
 module.exports = {
     createEvent,
     showAllEvents,
     deleteEvent,
-    updateEvent,
-    showUpComingEventsForCustomer
+    updateEvent
 }

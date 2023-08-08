@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const responseMessage = require("../middleware/responseHandler");
 const RError = require("../middleware/error.js");
 const customerAuth = require("../middleware/customerAuth");
+const adminAuth = require("../middleware/adminAuth");
 
 
 const Reservation = db.reservations;
@@ -481,6 +482,7 @@ const showEvents = async (req, res)=>{
 
 
 }
+
 
 
 
