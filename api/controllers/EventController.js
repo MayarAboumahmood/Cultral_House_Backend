@@ -15,7 +15,7 @@ const sequelize = db.sequelize;
 const ValidationError = db.ValidationError;
 const Reservation = db.reservations;
 const Order = db.orders;
-const Orders_drinks = db.orders_drinks;
+const workers_events = db.workers_events;
 const Op = db.Op;
 const Worker = db.workers;
 
@@ -304,9 +304,11 @@ const showEventDetailsForAdmin = async (req, res)=>{
         }});
 
         const reservations = await Reservation.findAll({where:{
-            event_id,
-        
-        }});
+            event_id
+        },
+        include:Worker
+    
+    });
 
 
         const reservation_id =  reservations.map(v =>v.reservation_id);
@@ -319,6 +321,11 @@ const showEventDetailsForAdmin = async (req, res)=>{
                        
                       
                     },
+                    include:
+                        {
+                            model: workers_events,
+                            include: Worker
+                          }
                     
                 });
         const data = {event, pictures,reservations, orders};
