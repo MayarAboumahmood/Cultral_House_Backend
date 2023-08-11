@@ -32,13 +32,16 @@ db.workers_events = require('./worker_event.js')(sequelize, DataTypes);
 db.orders = require('./order.js')(sequelize, DataTypes);
 db.drinks = require('./drink.js')(sequelize, DataTypes);
 db.orders_drinks = require('./order_drink.js')(sequelize, DataTypes);
-
+db.actions = require('./action')(sequelize,DataTypes);
 
 
 
 // admin-event relation
+
 db.admins.hasMany(db.events,{foreignKey:'admin_id'});
 db.events.belongsTo(db.admins,{foreignKey:'admin_id'});
+db.admins.hasMany(db.actions,{foreignKey:'admin_id'});
+db.actions.belongsTo(db.admins,{foreignKey:'admin_id'})
 
 // event-photo relation
 db.events.hasMany(db.photos,{foreignKey:'event_id'});

@@ -40,6 +40,7 @@ const saveAdmin = async (req, res, next) => {
 
 const checkWorker = async (req, res, next) => {
     //search the database to see if admin exist
+
     try {
         if (!req.body.email || !req.body.password || !req.body.first_name,!req.body.last_name,!req.body.phone_number) {
             console.log(req.body)
@@ -61,7 +62,6 @@ const checkWorker = async (req, res, next) => {
                 msg: "Email does exist in the data base"
             });
         }
-
         next();
     } catch (error) {
         console.log(error);
@@ -86,6 +86,7 @@ const checkIfSuper = async (req, res, next) => {
                         msg: 'you are not the super admin'
                     })
                 } else {
+                    req.admin_id = decoded.admin.admin_id
                     next()
                 }
             }
