@@ -6,11 +6,7 @@ module.exports = (sequelize, DataTypes) => {
             autoIncrement: true,
             primaryKey: true,
 
-        },
-        cost: {
-            type: DataTypes.FLOAT,
-            allowNull: false
-        },
+        }
     },
      {timestamps: true},)
 }

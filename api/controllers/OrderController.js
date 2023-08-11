@@ -322,6 +322,8 @@ const showOrders = async (req, res)=>{
 
        const reservation_id = reservations.map(v=> v.reservation_id);
 
+       ;
+
         const orders = await Order.findAll({
             where :{
                 [Op.or]: {reservation_id}

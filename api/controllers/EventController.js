@@ -1,26 +1,57 @@
 const db = require("../Models/index");
 
+const responseMessage = require("../middleware/responseHandler");
+const RError = require("../middleware/error.js");
+const adminAuth = require("../middleware/adminAuth");
+const fs = require('fs');
+
+
 
 const Event = db.events;
-const Artist = db.events;
+const Artist = db.artists;
 const Artist_Event = db.artists_events
 const Photos = db.photos
+const sequelize = db.sequelize;
+const ValidationError = db.ValidationError;
+const Reservation = db.reservations;
+const Order = db.orders;
+const Orders_drinks = db.orders_drinks;
 const Op = db.Op;
+const Worker = db.workers;
+
+
 
 
 const createEvent = async (req, res) => {
+
+    const {
+        title,
+        description,
+        ticket_price,
+        available_places,
+        band_name,
+        begin_date,
+        artists,
+        artists_cost
+    } = req.body;
+
+    const token = req.headers["x-access-token"];
+
+
+    let transaction;
+
+
+
     try {
-        const {
-            title,
-            description,
-            ticket_price,
-            available_places,
-            band_name,
-            begin_date,
-            admin_id,
-            artist_id,
-            cost
-        } = req.body;
+  
+
+        transaction = await sequelize.transaction();
+
+
+        const admin = await adminAuth(token);
+
+        const admin_id = admin.admin_id;
+        
         const data = {
             title,
             description,
@@ -29,56 +60,65 @@ const createEvent = async (req, res) => {
             band_name,
             begin_date,
             admin_id,
+            artists_cost
         };
-        const value = date.format(now,'YYYY/MM/DD HH:mm:ss');//nedded to format the date
-
-        const event = await Event.create(data);
-        const artists = JSON.parse(artist_id)
 
 
-        await db.sequelize.transaction(async (t) => {
-            try {
-                for (const ar_id of artists) {
-                    const artist = await Artist.findByPk(ar_id)
+                const event = await Event.create(data, {transaction});
+
+                
+                const artists_ids = artists.split(',').map(id => id.trim());
+
+                    
+                for(const artist_id of artists_ids)
+                {
+                    const artist = await Artist.findByPk(artist_id)
                     if (!artist) {
-                        throw new Error("artist not found" + ar_id)
+                        throw new RError(404,"artist not found " + artist_id);
                     }
-                    const artist_event = await Artist_Event.create({
-                        artist_id: ar_id,
+                     await Artist_Event.create({
+                        artist_id: artist_id,
                         event_id: event.event_id,
-                        cost: 100
-                    }, {transaction: t})
+                    }, {transaction})
+                
                 }
-            } catch (e) {
-                console.log("rolling back")
-                console.log(e)
-                t.rollback()
+
+                if (req.files) {
+                    for (let i = 0; i < req.files.length; i++) {
+                       await Photos.create({
+                            event_id: event.event_id,
+                            picture: req.files[i].path
+                        }, {transaction})
+                    }
+                }
+
+
+                await transaction.commit();
+
+                res.status(201).send(responseMessage(true, "event is added", event));
+        
+        
+
+            } catch(errors){
+
+                await transaction.rollback();
+                fs.unlinkSync(picture);
+
+                var statusCode = errors.statusCode || 500;
+                if (errors instanceof ValidationError) {
+        
+                    statusCode = 400;
+                    
+                }
+                console.log(errors);
+        
+                return res.status(statusCode).send(responseMessage(false, errors.message));
+
             }
-        });
-
-        if (req.files) {
-            for (let i = 0; i < req.files.length; i++) {
-                Photos.create({
-                    event_id: event.event_id,
-                    picture: req.files[i].path
-                })
-            }
-        }
-        console.log(req.files)
-
-        return res.status(201).json({
-            msg: "event created successfully",
-            data: event
-        });
+        
 
 
-    } catch (error) {
-        res.status(400).json({
-            req: [req.body, req.files.length + "number of files"],
-            msg: error.toString()
-        })
-        console.log(error);
-    }
+
 
 }
 
@@ -173,14 +213,7 @@ const showAllEvents = async (req, res) => {
     for (let index = 0; index < events.length; index++) {
         var event = events[index].toJSON();
         const dateObject = new Date(event.begin_date);
-        const date = dateObject.toLocaleString("en", {hour12: false});
-        const dateArray = date.split(/[,:]/);
-
-       const eventDate = dateArray[0];
-       const eventHours = dateArray[1];
-       const eventMinutes = dateArray[2];     
-
-         event.begin_date = date;
+        const date = dateObject.toLocaleStrin1
 
 
         if (currentDate < eventDate) {
@@ -220,9 +253,101 @@ const showAllEvents = async (req, res) => {
         data: events
     })
 }
+
+
+const showEventDetailsForCustomer = async (req, res)=>{
+
+
+    const event_id = req.body.event_id;
+
+
+    try {
+
+        const event = await Event.findByPk(event_id);
+
+        const pictures = await Photos.findAll({where:{
+            event_id
+        }});
+
+        const data = {event, pictures};
+      
+        res.status(200).send(responseMessage(true, "event is sent", data));
+
+    } catch (errors) {
+
+
+        var statusCode = errors.statusCode || 500;
+        if (errors instanceof ValidationError) {
+
+            statusCode = 400;
+            
+        }
+ 
+        return res.status(statusCode).send(responseMessage(false, errors.message));
+    }
+
+
+}
+
+const showEventDetailsForAdmin = async (req, res)=>{
+
+
+    const event_id = req.body.event_id;
+
+
+    try {
+
+        const event = await Event.findByPk(event_id);
+
+        const pictures = await Photos.findAll({where:{
+            event_id
+        }});
+
+        const reservations = await Reservation.findAll({where:{
+            event_id,
+        
+        }});
+
+
+        const reservation_id =  reservations.map(v =>v.reservation_id);
+ 
+    
+        
+                const orders = await Order.findAll({
+                    where :{
+                        [Op.or]: {reservation_id},
+                       
+                      
+                    },
+                    
+                });
+        const data = {event, pictures,reservations, orders};
+      
+        res.status(200).send(responseMessage(true, "event is sent", data));
+
+    } catch (errors) {
+
+
+        var statusCode = errors.statusCode || 500;
+        if (errors instanceof ValidationError) {
+
+            statusCode = 400;
+            
+        }
+
+        return res.status(statusCode).send(responseMessage(false, errors.message));
+    }
+
+
+}
+
+
 module.exports = {
     createEvent,
     showAllEvents,
     deleteEvent,
-    updateEvent
+    updateEvent,
+    showEventDetailsForCustomer,
+    showEventDetailsForAdmin
+
 }

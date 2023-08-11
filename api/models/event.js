@@ -30,6 +30,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             allowNull: false
         },
+        
+        artists_cost: {
+            type: DataTypes.FLOAT,
+            allowNull: true
+        },
 
     },
      {timestamps: true},)

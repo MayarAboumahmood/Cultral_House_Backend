@@ -18,4 +18,7 @@ router.post('/make-reservation',  checkAuth.checkIfSuper, adminController.makeRe
 
 router.delete('/delete-reservation',  checkAuth.checkIfSuper, adminController.deleteReservationByAdmin)
 
+router.get('/show-reservations',  checkAuth.checkIfSuper, adminController.showReservationsForAdmin)
+
+
 module.exports = router;

@@ -255,14 +255,43 @@ const deleteReservationByAdmin = async (req, res)=>{
 
 
 }
+const showReservationsForAdmin = async (req, res)=>{
 
+
+    const token = req.headers["x-access-token"];
+   
+    try {
+         await adminAuth(token);
+
+
+        
+
+            const reservations = await Reservation.findAll();
+
+            if (reservations.length === 0) {
+                throw new RError(404, "no reservations found");
+
+
+            }
+
+            res.status(200).send(responseMessage(true,"reservations have been updated successfully", reservations));        
+
+        } catch (error) {
+        
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+        
+        
+        }
+}
 module.exports = {
     createAdmin,
     login,
     deleteAdmin,
     showAllAdmins,
     makeReservationByAdmin,
-    deleteReservationByAdmin
+    deleteReservationByAdmin,
+    showReservationsForAdmin
 
 };
 
