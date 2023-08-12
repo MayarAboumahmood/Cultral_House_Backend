@@ -288,7 +288,11 @@ const showEventDetailsForCustomer = async (req, res) => {
 
     try {
 
-        const event = await Event.findOne({where: {event_id}, include: Photos});
+        const event = await Event.findOne({where: {event_id}, include: Photos,include:
+            {
+                model: Artist_Event,
+                include: Artist
+            }});
 
         const pictures = await Photos.findAll({
             where: {
@@ -323,7 +327,11 @@ const showEventDetailsForAdmin = async (req, res) => {
 
     try {
 
-        const event = await Event.findOne({where: {event_id}, include: Photos});
+        const event = await Event.findOne({where: {event_id}, include: Photos,  include:
+            {
+                model: Artist_Event,
+                include: Artist
+            }});
 
 
         const reservations = await Reservation.findAll({
