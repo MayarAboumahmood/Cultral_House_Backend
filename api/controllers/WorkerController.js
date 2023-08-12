@@ -1,18 +1,18 @@
 const db = require("../Models/index");
-const { unlinkSync } = require('fs');
+const {unlinkSync} = require('fs');
 
 const Worker = db.workers;
 const workers_events = db.workers_events;
 const Event = db.events;
+const Actions = db.actions;
 const Op = db.Op;
 
 
-
-
 const createWorker = async (req, res) => {
-    
+    console.log("admin id is ", req.admin_id)
     try {
-        const { first_name, last_name, phone_number, email, password } = req.body;
+
+        const {first_name, last_name, phone_number, email, password} = req.body;
 
         const data = {
             first_name,
@@ -28,6 +28,15 @@ const createWorker = async (req, res) => {
 
         //saving the user
         const worker = await Worker.create(data);
+        const newData = data;
+        delete newData.password
+
+        await Actions.create({
+            admin_id: req.admin_id,
+            action: "Creating Worker",
+            time: Date.now(),
+            details: newData
+        })
 
         return res.status(201).json({
             msg: "worker created successfully",
@@ -65,11 +74,19 @@ const deleteWorker = async (req, res) => {
             worker_id: worker_id
         }
     })
+
     if (worker) {
         if (worker.image) {
             unlinkSync(worker.image);
 
         }
+
+        await Actions.create({
+            admin_id: req.admin_id,
+            action: "Deleting Worker",
+            time: Date.now(),
+            details: worker
+        })
 
         worker.destroy()
 
@@ -88,29 +105,31 @@ const showWorkerDetails = async (req, res) => {
     const worker_id = req.params.worker_id;
 
     const worker = await Worker.findOne({
-        where:{worker_id}
+        where: {worker_id}
     })
 
-    const we = await workers_events.findAll({where:{
-        worker_id
-    }});
+    const we = await workers_events.findAll({
+        where: {
+            worker_id
+        }
+    });
 
     if (we != null) {
 
         const event_id = we.map(v => v.event_id);
-          
+
         const events = await Event.findAll({
             where: {
-                [Op.or]: { event_id },
+                [Op.or]: {event_id},
             },
         });
-    
+
         const data = {worker, events};
-    res.status(200).json({
-        msg: "worker has been sent successfully",
-        data: data
-    })
-}
+        res.status(200).json({
+            msg: "worker has been sent successfully",
+            data: data
+        })
+    }
 }
 
 module.exports = {
