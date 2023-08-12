@@ -1,9 +1,6 @@
 const bcrypt = require("bcrypt");
 const db = require("../Models/index");
-const Customers = db.customers;
-const Drinks = db.drinks;
-const Workers = db.workers;
-const Actions = db.actions;
+
 const jwt = require("jsonwebtoken");
 
 const responseMessage = require("../middleware/responseHandler");
@@ -17,8 +14,12 @@ const Event = db.events;
 const ValidationError = db.ValidationError;
 const sequelize = db.sequelize;
 const workers_events = db.workers_events;
-
+const Orders_drinks = db.orders_drinks;
 const Admin = db.admins;
+const Customers = db.customers;
+const Drinks = db.drinks;
+const Workers = db.workers;
+const Actions = db.actions;
 
 const createAdmin = async (req, res) => {
     try {
@@ -277,14 +278,50 @@ const deleteReservationByAdmin = async (req, res) => {
 }
 const stats = async (req, res) => {
 
-
+// for cost
     const artistsCost = await Event.sum("artists_cost");
     const workersCost = await workers_events.sum("cost");
     let drinksCost = 0;
 
 
+    //for proceeds
 
-    const upcoming_events = await Event.findAll({
+    let ordersProceeds = 0;
+    const OD = await Orders_drinks.findAll({include: Drinks});
+
+
+    OD.forEach(od => {
+        if (od["drink"] != null) {
+            ordersProceeds += (od["quantity"] * od["drink"]["price"]);
+
+        }
+        
+
+    });
+
+    let reservationsProceeds = 0;
+
+    const reservations = await Reservation.findAll({where:{
+         attendance: {
+            [db.Op.eq]: true
+        }
+    },
+
+include: Event
+});
+
+reservations.forEach(res => {
+    
+    reservationsProceeds += (res["attendance_number"] * res["event"]["ticket_price"]);
+
+    
+    
+
+});
+  
+//////
+
+    const upcoming_events = await Event.count({
         where: {
             begin_date: {
                 [db.Op.gt]: sequelize.literal('NOW()'), // Current date and time
@@ -292,7 +329,7 @@ const stats = async (req, res) => {
         },
     });
 
-    const past_events = await Event.findAll({
+    const past_events = await Event.count({
         where: {
             begin_date: {
                 [db.Op.lte]: sequelize.literal('NOW()'), // Current date and time
@@ -324,7 +361,11 @@ const stats = async (req, res) => {
         }
     )
 
+
     const totalCost = artistsCost + workersCost + drinksCost;
+    const proceeds = ordersProceeds + reservationsProceeds;
+const profit = proceeds - totalCost;
+
     return res.status(200).json({
         "upcoming_events": upcoming_events,
         "past_events": past_events,
@@ -332,7 +373,9 @@ const stats = async (req, res) => {
         "customers": customers,
         "drinks": drinks_quantity,
         "admins": admins,
-        "totalCost": totalCost
+        "totalCost": totalCost,
+        "proceeds":proceeds,
+        "profit": profit
     })
 
 }
