@@ -6,7 +6,6 @@ const adminAuth = require("../middleware/adminAuth");
 const fs = require('fs');
 
 
-
 const Event = db.events;
 const Artist = db.artists;
 const Artist_Event = db.artists_events
@@ -14,12 +13,11 @@ const Photos = db.photos
 const sequelize = db.sequelize;
 const ValidationError = db.ValidationError;
 const Reservation = db.reservations;
+const Actions = db.actions;
 const Order = db.orders;
 const workers_events = db.workers_events;
 const Op = db.Op;
 const Worker = db.workers;
-
-
 
 
 const createEvent = async (req, res) => {
@@ -41,9 +39,8 @@ const createEvent = async (req, res) => {
     let transaction;
 
 
-
     try {
-  
+
 
         transaction = await sequelize.transaction();
 
@@ -51,7 +48,7 @@ const createEvent = async (req, res) => {
         const admin = await adminAuth(token);
 
         const admin_id = admin.admin_id;
-        
+
         const data = {
             title,
             description,
@@ -63,65 +60,68 @@ const createEvent = async (req, res) => {
             artists_cost
         };
 
+        const event = await Event.create(data, {transaction});
 
-                const event = await Event.create(data, {transaction});
-
-                
-                const artists_ids = artists.split(',').map(id => id.trim());
-
-                    
-                for(const artist_id of artists_ids)
-                {
-                    const artist = await Artist.findByPk(artist_id)
-                    if (!artist) {
-                        throw new RError(404,"artist not found " + artist_id);
-                    }
-                     await Artist_Event.create({
-                        artist_id: artist_id,
-                        event_id: event.event_id,
-                    }, {transaction})
-                
-                }
-
-                if (req.files) {
-                    for (let i = 0; i < req.files.length; i++) {
-                       await Photos.create({
-                            event_id: event.event_id,
-                            picture: req.files[i].path
-                        }, {transaction})
-                    }
-                }
-
-
-                await transaction.commit();
-
-                res.status(201).send(responseMessage(true, "event is added", event));
-        
-        
-
-            } catch(errors){
-
-                await transaction.rollback();
-
-                var statusCode = errors.statusCode || 500;
-                if (errors instanceof ValidationError) {
-        
-                    statusCode = 400;
-                    
-                }
-                console.log(errors);
-        
-                return res.status(statusCode).send(responseMessage(false, errors.message));
-
+        const artists_ids = artists.split(',').map(id => id.trim());
+        for (const artist_id of artists_ids) {
+            const artist = await Artist.findByPk(artist_id)
+            if (!artist) {
+                throw new RError(404, "artist not found " + artist_id);
             }
-        
+            await Artist_Event.create({
+                artist_id: artist_id,
+                event_id: event.event_id,
+            }, {transaction})
+
+        }
+
+        if (req.files) {
+            for (let i = 0; i < req.files.length; i++) {
+                await Photos.create({
+                    event_id: event.event_id,
+                    picture: req.files[i].path
+                }, {transaction})
+            }
+        }
 
 
+        await transaction.commit();
+
+        await Actions.create({
+            admin_id: admin_id,
+            action: "Adding New Event",
+            time: Date.now(),
+            details: event
+        })
+
+        res.status(201).send(responseMessage(true, "event is added", event));
+
+
+    } catch (errors) {
+
+        await transaction.rollback();
+
+        let statusCode = errors.statusCode || 500;
+        if (errors instanceof ValidationError) {
+
+            statusCode = 400;
+
+        }
+        console.log(errors);
+
+        return res.status(statusCode).send(responseMessage(false, errors.message));
+
+    }
 
 
 }
 
 const deleteEvent = async (req, res) => {
+
+    const token = req.headers["x-access-token"];
+    const admin = await adminAuth(token);
+    const admin_id = admin.admin_id;
+
     const event_id = req.body.event_id;
 
     if (!event_id) {
@@ -134,7 +134,15 @@ const deleteEvent = async (req, res) => {
             event_id: event_id
         }
     })
+
     if (event) {
+
+        await Actions.create({
+            admin_id: admin_id,
+            action: "Adding New Event",
+            time: Date.now(),
+            details: event
+        })
 
         event.destroy()
 
@@ -153,7 +161,13 @@ const deleteEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
 
     const event = await Event.findByPk(req.body.event_id);
+
+    const token = req.headers["x-access-token"];
+    const admin = await adminAuth(token);
+    const admin_id = admin.admin_id;
+
     if (event != null) {
+        const old_event = event;
         const {title, description, ticket_price, available_places, begin_date, band_name} = req.body
         if (title != null)
             event.title = title
@@ -169,11 +183,20 @@ const updateEvent = async (req, res) => {
             event.band_name = band_name
 
         try {
+
+            await Actions.create({
+                admin_id: admin_id,
+                action: "Editing Event",
+                time: Date.now(),
+                details: {"new event": event, "old event": old_event}
+            })
+
             await event.save();
             return res.status(202).json({
                 msg: "event has been updated successfully",
                 data: event
             })
+
         } catch (e) {
             return res.status(400).json({
                 msg: e,
@@ -190,10 +213,9 @@ const updateEvent = async (req, res) => {
 }
 
 
-
 const showAllEvents = async (req, res) => {
 
-    var events = await Event.findAll({include:Photos});
+    var events = await Event.findAll({include: Photos});
     const past = [];
     const upComing = [];
     const now = [];
@@ -203,9 +225,9 @@ const showAllEvents = async (req, res) => {
 
     const currentDateArray = ctDate.split(/[,:]/);
 
-       const currentDate = currentDateArray[0];
-       const currentHours = currentDateArray[1];
-       const currentMinutes = currentDateArray[2];
+    const currentDate = currentDateArray[0];
+    const currentHours = currentDateArray[1];
+    const currentMinutes = currentDateArray[2];
 
 
     //2023-08-07 15:00
@@ -215,41 +237,39 @@ const showAllEvents = async (req, res) => {
         const date = dateObject.toLocaleString("en", {hour12: false});
         const dateArray = date.split(/[,:]/);
 
-       const eventDate = dateArray[0];
-       const eventHours = dateArray[1];
-       const eventMinutes = dateArray[2];     
+        const eventDate = dateArray[0];
+        const eventHours = dateArray[1];
+        const eventMinutes = dateArray[2];
 
-         event.begin_date = date;
+        event.begin_date = date;
 
         if (currentDate < eventDate) {
 
             upComing.push(event);
-            
-        }
-        else if (currentDate > eventDate) {
-            
+
+        } else if (currentDate > eventDate) {
+
             past.push(event);
-        }
-        else{
-           
+        } else {
+
             const eventDurationInMinutes = eventDurstionInHours * 60;
-      
+
             const currentTimeInMinutes = currentHours * 60 + Number(currentMinutes);
 
             const eventTimeInMinutes = eventHours * 60 + Number(eventMinutes);
 
             const eventEndTimeInMinutes = eventTimeInMinutes + Number(eventDurationInMinutes);
 
-      
+
             if (currentTimeInMinutes < eventTimeInMinutes) {
-              upComing.push(event);
+                upComing.push(event);
             } else if (currentTimeInMinutes >= eventEndTimeInMinutes) {
-              past.push(event);
+                past.push(event);
             } else {
-              now.push(event);
+                now.push(event);
             }
-          }
-        
+        }
+
     }
 
     events = {past, now, upComing};
@@ -260,7 +280,7 @@ const showAllEvents = async (req, res) => {
 }
 
 
-const showEventDetailsForCustomer = async (req, res)=>{
+const showEventDetailsForCustomer = async (req, res) => {
 
 
     const event_id = req.body.event_id;
@@ -268,13 +288,15 @@ const showEventDetailsForCustomer = async (req, res)=>{
 
     try {
 
-        const event = await Event.findOne({where:{event_id},  include:Photos});
+        const event = await Event.findOne({where: {event_id}, include: Photos});
 
-        const pictures = await Photos.findAll({where:{
-            event_id
-        }});
+        const pictures = await Photos.findAll({
+            where: {
+                event_id
+            }
+        });
 
-      
+
         res.status(200).send(responseMessage(true, "event is sent", event));
 
     } catch (errors) {
@@ -284,16 +306,16 @@ const showEventDetailsForCustomer = async (req, res)=>{
         if (errors instanceof ValidationError) {
 
             statusCode = 400;
-            
+
         }
- 
+
         return res.status(statusCode).send(responseMessage(false, errors.message));
     }
 
 
 }
 
-const showEventDetailsForAdmin = async (req, res)=>{
+const showEventDetailsForAdmin = async (req, res) => {
 
 
     const event_id = req.body.event_id;
@@ -301,37 +323,36 @@ const showEventDetailsForAdmin = async (req, res)=>{
 
     try {
 
-        const event = await Event.findOne({where:{event_id},  include:Photos});
-
-       
-
-        const reservations = await Reservation.findAll({where:{
-            event_id
-        },
-        include:Worker
-    
-    });
+        const event = await Event.findOne({where: {event_id}, include: Photos});
 
 
-        const reservation_id =  reservations.map(v =>v.reservation_id);
- 
-    
-        
-                const orders = await Order.findAll({
-                    where :{
-                        [Op.or]: {reservation_id},
-                       
-                      
-                    },
-                    include:
-                        {
-                            model: workers_events,
-                            include: Worker
-                          }
-                    
-                });
-        const data = {event,reservations, orders};
-      
+        const reservations = await Reservation.findAll({
+            where: {
+                event_id
+            },
+            include: Worker
+
+        });
+
+
+        const reservation_id = reservations.map(v => v.reservation_id);
+
+
+        const orders = await Order.findAll({
+            where: {
+                [Op.or]: {reservation_id},
+
+
+            },
+            include:
+                {
+                    model: workers_events,
+                    include: Worker
+                }
+
+        });
+        const data = {event, reservations, orders};
+
         res.status(200).send(responseMessage(true, "event is sent", data));
 
     } catch (errors) {
@@ -341,7 +362,7 @@ const showEventDetailsForAdmin = async (req, res)=>{
         if (errors instanceof ValidationError) {
 
             statusCode = 400;
-            
+
         }
 
         return res.status(statusCode).send(responseMessage(false, errors.message));

@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const db = require("../Models/index");
+const Actions = db.actions;
 const jwt = require("jsonwebtoken");
 
 const responseMessage = require("../middleware/responseHandler");
@@ -16,7 +17,7 @@ const Admin = db.admins;
 
 const createAdmin = async (req, res) => {
     try {
-        const { admin_name, email, password, is_super } = req.body;
+        const {admin_name, email, password, is_super} = req.body;
         const data = {
             admin_name,
             email,
@@ -38,9 +39,9 @@ const createAdmin = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const {email, password} = req.body;
         if (!email || !password) {
-            res.status(400).json({ msg: "validation error" })
+            res.status(400).json({msg: "validation error"})
         }
 
         //find an admin by their email
@@ -59,7 +60,7 @@ const login = async (req, res) => {
             //generate token with the admin's id and the secretKey in the env file
 
             if (isSame) {
-                let token = jwt.sign({ admin: admin }, process.env.SECRET, null, {
+                let token = jwt.sign({admin: admin}, process.env.SECRET, null, {
                     expiresIn: 24 * 60 * 60 * 1000,
                 });
 
@@ -71,10 +72,10 @@ const login = async (req, res) => {
                     token: token
                 });
             } else {
-                return res.status(401).json({ msg: "Authentication failed" });
+                return res.status(401).json({msg: "Authentication failed"});
             }
         } else {
-            return res.status(401).json({ msg: "Authentication failed" });
+            return res.status(401).json({msg: "Authentication failed"});
         }
     } catch (error) {
         console.log(error);
@@ -96,7 +97,7 @@ const deleteAdmin = async (req, res) => {
     })
     if (admin) {
 
-       await admin.destroy()
+        await admin.destroy()
 
         return res.status(202).json({
             msg: "admin has been deleted successfully",
@@ -118,67 +119,75 @@ const showAllAdmins = async (req, res) => {
     })
 }
 
-const makeReservationByAdmin = async(req, res)=>{
+const makeReservationByAdmin = async (req, res) => {
 
     const token = req.headers["x-access-token"];
 
 
     try {
-        
+
         const event_id = req.body.event_id;
-        const customer_name =req.body.customer_name;
+        const customer_name = req.body.customer_name;
 
 
         if (!event_id) {
             throw new RError(400, "choose the event");
         }
-    
 
-    const number_of_places = req.body.number_of_places;
 
-    if (!number_of_places) {
+        const number_of_places = req.body.number_of_places;
 
-        throw new RError(400, "enter the number of the attendees");
+        if (!number_of_places) {
 
-    }
+            throw new RError(400, "enter the number of the attendees");
 
-    const admin = await adminAuth(token);
+        }
 
-    const admin_id = admin.admin_id;
+        const admin = await adminAuth(token);
 
-    const event = await Event.findByPk(event_id);
+        const admin_id = admin.admin_id;
 
-    
-    if (event == null) {
+        const event = await Event.findByPk(event_id);
 
-        throw new RError(404, "event not found");
 
-    }
+        if (event == null) {
 
-    if (number_of_places < 1) {
-        throw new RError(400, "enter a valid number");
+            throw new RError(404, "event not found");
 
-    }
+        }
 
-    if (number_of_places > event.available_places) {
-        throw new RError(400, "no enough spots in the events");
+        if (number_of_places < 1) {
+            throw new RError(400, "enter a valid number");
 
-    }
+        }
 
-    event.available_places -= number_of_places;
+        if (number_of_places > event.available_places) {
+            throw new RError(400, "no enough spots in the events");
 
-   const reservation = await Reservation.create({
-        event_id,
-        number_of_places,
-        customer_id:null,
-        customer_name
+        }
 
-    });
+        event.available_places -= number_of_places;
 
-    await event.save();
+        const reservation = await Reservation.create({
+            event_id,
+            number_of_places,
+            customer_id: null,
+            customer_name
 
-    res.status(201).send(responseMessage(true, "reservation has been added", reservation));
-   
+        });
+
+
+        await event.save();
+
+        await Actions.create({
+            admin_id: admin_id,
+            action: "Adding New Reservation",
+            time: Date.now(),
+            details: reservation
+        })
+
+        res.status(201).send(responseMessage(true, "reservation has been added", reservation));
+
 
     } catch (errors) {
 
@@ -186,7 +195,7 @@ const makeReservationByAdmin = async(req, res)=>{
         if (errors instanceof ValidationError) {
 
             statusCode = 400;
-            
+
         }
 
         return res.status(statusCode).send(responseMessage(false, errors.message));
@@ -195,7 +204,7 @@ const makeReservationByAdmin = async(req, res)=>{
 
 }
 
-const deleteReservationByAdmin = async (req, res)=>{
+const deleteReservationByAdmin = async (req, res) => {
 
     const token = req.headers["x-access-token"];
 
@@ -211,78 +220,82 @@ const deleteReservationByAdmin = async (req, res)=>{
             throw new RError(400, "choose the reservation");
         }
 
-      
+
         const reservation = await Reservation.findByPk(reservation_id);
 
         if (reservation === null) {
 
             throw new RError(404, "reservation not found");
-    
+
         }
 
 
         const admin = await adminAuth(token);
 
         const admin_id = admin.admin_id;
-    
 
-            const event_id = reservation.event_id;
 
-            const number_of_places = reservation.number_of_places;
-            const event = await Event.findByPk(event_id);
+        const event_id = reservation.event_id;
 
-            event.available_places += number_of_places;
+        const number_of_places = reservation.number_of_places;
+        const event = await Event.findByPk(event_id);
 
-            await reservation.destroy({transaction});
-            await event.save({ transaction });
+        event.available_places += number_of_places;
 
-            await transaction.commit();
-            
-            res.status(200).send(responseMessage(true,"reservation has been deleted successfully"));        
+        await reservation.destroy({transaction});
+        await event.save({transaction});
+
+        await transaction.commit();
+
+        await Actions.create({
+            admin_id: admin_id,
+            action: "Deleting Reservation",
+            time: Date.now(),
+            details: reservation
+        })
+
+        res.status(200).send(responseMessage(true, "reservation has been deleted successfully"));
 
 
     } catch (error) {
 
 
         await transaction.rollback();
-    
+
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-    
-        
+
+
     }
 
 
-
 }
-const showReservationsForAdmin = async (req, res)=>{
+const showReservationsForAdmin = async (req, res) => {
 
 
     const token = req.headers["x-access-token"];
-   
+
     try {
-         await adminAuth(token);
+        await adminAuth(token);
 
 
-        
+        const reservations = await Reservation.findAll();
 
-            const reservations = await Reservation.findAll();
-
-            if (reservations.length === 0) {
-                throw new RError(404, "no reservations found");
+        if (reservations.length === 0) {
+            throw new RError(404, "no reservations found");
 
 
-            }
+        }
 
-            res.status(200).send(responseMessage(true,"reservations have been updated successfully", reservations));        
+        res.status(200).send(responseMessage(true, "reservations have been updated successfully", reservations));
 
-        } catch (error) {
-        
+    } catch (error) {
+
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-        
-        
-        }
+
+
+    }
 }
 module.exports = {
     createAdmin,

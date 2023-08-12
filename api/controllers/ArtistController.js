@@ -1,5 +1,7 @@
 const bcrypt = require("bcrypt");
 const db = require("../Models/index");
+const Actions = db.actions;
+const adminAuth = require("../middleware/adminAuth")
 const jwt = require("jsonwebtoken");
 
 const Artist = db.artists;
@@ -9,6 +11,18 @@ const createArtist = async (req, res) => {
         const {artist_name, description} = req.body
         const data = {artist_name, description}
         const artist = await Artist.create(data)
+
+        const token = req.headers["x-access-token"];
+        const admin = await adminAuth(token);
+        const admin_id = admin.admin_id;
+
+        await Actions.create({
+            admin_id: admin_id,
+            action: "Adding New Artist",
+            time: Date.now(),
+            details: artist
+        })
+
         res.status(200).json(artist)
 
     } catch (e) {
@@ -26,9 +40,21 @@ const deleteArtist = async (req, res) => {
         if (!artist) {
             throw new Error("No Artist Found")
         }
+
+        const token = req.headers["x-access-token"];
+        const admin = await adminAuth(token);
+        const admin_id = admin.admin_id;
+
+        await Actions.create({
+            admin_id: admin_id,
+            action: "Deleting Artist",
+            time: Date.now(),
+            details: artist
+        })
+
         artist.destroy();
         res.status(202).json({
-            msg: "Event has been deleted successfully",
+            msg: "Artist has been deleted successfully",
             data: artist
         });
 
