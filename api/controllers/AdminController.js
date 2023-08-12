@@ -16,6 +16,7 @@ const Reservation = db.reservations;
 const Event = db.events;
 const ValidationError = db.ValidationError;
 const sequelize = db.sequelize;
+const workers_events = db.workers_events;
 
 const Admin = db.admins;
 
@@ -277,6 +278,12 @@ const deleteReservationByAdmin = async (req, res) => {
 const stats = async (req, res) => {
 
 
+    const artistsCost = await Event.sum("artists_cost");
+    const workersCost = await workers_events.sum("cost");
+    let drinksCost = 0;
+
+
+
     const upcoming_events = await Event.findAll({
         where: {
             begin_date: {
@@ -306,6 +313,7 @@ const stats = async (req, res) => {
 
     drinks.forEach(drink => {
         drinks_quantity += drink["quantity"];
+        drinksCost += (drink["cost"] *  drink["quantity"]);
     })
 
     const admins = await Admin.count(
@@ -316,13 +324,15 @@ const stats = async (req, res) => {
         }
     )
 
+    const totalCost = artistsCost + workersCost + drinksCost;
     return res.status(200).json({
         "upcoming_events": upcoming_events,
         "past_events": past_events,
         "workers": workers,
         "customers": customers,
         "drinks": drinks_quantity,
-        "admins": admins
+        "admins": admins,
+        "totalCost": totalCost
     })
 
 }
