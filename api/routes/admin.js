@@ -20,5 +20,6 @@ router.delete('/delete-reservation',  checkAuth.checkIfSuper, adminController.de
 
 router.get('/show-reservations',  checkAuth.checkIfSuper, adminController.showReservationsForAdmin)
 
+router.get('/stats', adminController.stats)
 
 module.exports = router;

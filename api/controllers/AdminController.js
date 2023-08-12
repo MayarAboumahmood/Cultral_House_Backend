@@ -298,6 +298,15 @@ const showReservationsForAdmin = async (req, res) => {
     }
 }
 
+const stats = async (req, res) =>{
+
+
+const events = await Event.count();
+
+console.log(events)
+
+
+}
 
 module.exports = {
     createAdmin,
@@ -306,7 +315,8 @@ module.exports = {
     showAllAdmins,
     makeReservationByAdmin,
     deleteReservationByAdmin,
-    showReservationsForAdmin
+    showReservationsForAdmin,
+    stats
 
 };
 
