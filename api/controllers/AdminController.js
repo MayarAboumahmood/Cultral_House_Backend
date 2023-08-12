@@ -1,11 +1,15 @@
 const bcrypt = require("bcrypt");
 const db = require("../Models/index");
+const Customers = db.customers;
+const Drinks = db.drinks;
+const Workers = db.workers;
 const Actions = db.actions;
 const jwt = require("jsonwebtoken");
 
 const responseMessage = require("../middleware/responseHandler");
 const RError = require("../middleware/error.js");
 const adminAuth = require("../middleware/adminAuth");
+const {where} = require("sequelize");
 
 
 const Reservation = db.reservations;
@@ -270,6 +274,59 @@ const deleteReservationByAdmin = async (req, res) => {
 
 
 }
+const stats = async (req, res) => {
+
+
+    const upcoming_events = await Event.findAll({
+        where: {
+            begin_date: {
+                [db.Op.gt]: sequelize.literal('NOW()'), // Current date and time
+            },
+        },
+    });
+
+    const past_events = await Event.findAll({
+        where: {
+            begin_date: {
+                [db.Op.lte]: sequelize.literal('NOW()'), // Current date and time
+            },
+        },
+    });
+
+    const workers = await Workers.count()
+    const customers = await Customers.count();
+    let drinks_quantity = 0;
+    const drinks = await Drinks.findAll({
+        where: {
+            quantity: {
+                [db.Op.gt]: 0
+            }
+        }
+    })
+
+    drinks.forEach(drink => {
+        drinks_quantity += drink["quantity"];
+    })
+
+    const admins = await Admin.count(
+        {
+            where: {
+                is_super: false
+            }
+        }
+    )
+
+    return res.status(200).json({
+        "upcoming_events": upcoming_events,
+        "past_events": past_events,
+        "workers": workers,
+        "customers": customers,
+        "drinks": drinks_quantity,
+        "admins": admins
+    })
+
+}
+
 const showReservationsForAdmin = async (req, res) => {
 
 
@@ -296,16 +353,6 @@ const showReservationsForAdmin = async (req, res) => {
 
 
     }
-}
-
-const stats = async (req, res) =>{
-
-
-const events = await Event.count();
-
-console.log(events)
-
-
 }
 
 module.exports = {
