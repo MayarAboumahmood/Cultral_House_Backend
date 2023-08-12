@@ -193,7 +193,7 @@ const updateEvent = async (req, res) => {
 
 const showAllEvents = async (req, res) => {
 
-    var events = await Event.findAll();
+    var events = await Event.findAll({include:Photos});
     const past = [];
     const upComing = [];
     const now = [];
@@ -268,15 +268,14 @@ const showEventDetailsForCustomer = async (req, res)=>{
 
     try {
 
-        const event = await Event.findByPk(event_id);
+        const event = await Event.findOne({where:{event_id},  include:Photos});
 
         const pictures = await Photos.findAll({where:{
             event_id
         }});
 
-        const data = {event, pictures};
       
-        res.status(200).send(responseMessage(true, "event is sent", data));
+        res.status(200).send(responseMessage(true, "event is sent", event));
 
     } catch (errors) {
 
@@ -302,11 +301,9 @@ const showEventDetailsForAdmin = async (req, res)=>{
 
     try {
 
-        const event = await Event.findByPk(event_id);
+        const event = await Event.findOne({where:{event_id},  include:Photos});
 
-        const pictures = await Photos.findAll({where:{
-            event_id
-        }});
+       
 
         const reservations = await Reservation.findAll({where:{
             event_id
@@ -333,7 +330,7 @@ const showEventDetailsForAdmin = async (req, res)=>{
                           }
                     
                 });
-        const data = {event, pictures,reservations, orders};
+        const data = {event,reservations, orders};
       
         res.status(200).send(responseMessage(true, "event is sent", data));
 
