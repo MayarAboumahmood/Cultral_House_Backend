@@ -1,6 +1,8 @@
 const checkAuth = require("../middleware/checkAuth");
 const workerController = require("../controllers/WorkerController");
 const upload = require("../middleware/upload");
+const checkCredentials = require('../middleware/checkCredentials')
+
 const express = require('express')
 
 const router = express.Router()
@@ -12,6 +14,14 @@ router.post('/create', checkAuth.checkIfSuper, upload('workers').single('image')
 router.delete('/delete', checkAuth.checkIfSuper, workerController.deleteWorker)
 router.get('/show-worker-details/:worker_id', checkAuth.checkIfSuper, workerController.showWorkerDetails)
 
+router.post('/login',checkCredentials,workerController.login);
+
+router.get('/show-reservations',workerController.showReservationsForWorker);
+router.post('/confirmArrival',workerController.confirmArrival);
+
+router.post('/approveOrder',workerController.approveOrder);
+
+router.post('/retractOrder', workerController.retractOrder)
 
 
 module.exports = router

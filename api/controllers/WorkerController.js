@@ -1,25 +1,36 @@
 const db = require("../Models/index");
-const {unlinkSync} = require('fs');
+const { unlinkSync } = require('fs');
+const workerAuth = require("../middleware/workerAuth");
+const responseMessage = require("../middleware/responseHandler");
+const RError = require("../middleware/error.js");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const eventEmitter = require("./eventEmitter");
+
 
 const Worker = db.workers;
 const workers_events = db.workers_events;
 const Event = db.events;
 const Actions = db.actions;
 const Op = db.Op;
+const Reservation = db.reservations;
+
+const Order = db.orders;
+
 
 
 const createWorker = async (req, res) => {
     console.log("admin id is ", req.admin_id)
     try {
 
-        const {first_name, last_name, phone_number, email, password} = req.body;
+        const { first_name, last_name, phone_number, email, password } = req.body;
 
         const data = {
             first_name,
             last_name,
             phone_number,
             email,
-            password,
+            password: await bcrypt.hash(password, 10),
         };
 
         if (req.file) {
@@ -52,6 +63,58 @@ const createWorker = async (req, res) => {
         console.log(error);
     }
 };
+
+const login = async (req, res) => {
+
+    const { email, phone_number, password } = req.body;
+
+
+
+    try {
+
+        let worker = null;
+
+        if (email) {
+            worker = await Worker.findOne({ where: { email } });
+
+        } else {
+            worker = await Worker.findOne({ where: { phone_number } });
+
+        }
+
+        if (worker == null) {
+
+
+            throw new RError(401, "wrong credentials");
+
+        } else {
+
+            const check = await bcrypt.compare(password, worker.password);
+            if (!check) {
+
+                throw new RError(401, "wrong credentials");
+            } else {
+                const { worker_id, first_name } = worker;
+
+                const token = jwt.sign({ worker_id, first_name }, process.env.SECRET, { expiresIn: '3d' });
+                res.status(200).send(responseMessage(true, "token is generated", token, "token"));
+
+
+
+            }
+
+
+        }
+
+    } catch (error) {
+
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
+    }
+
+}
 
 const showAllWorkers = async (req, res) => {
     const workers = await Worker.findAll()
@@ -105,7 +168,7 @@ const showWorkerDetails = async (req, res) => {
     const worker_id = req.params.worker_id;
 
     const worker = await Worker.findOne({
-        where: {worker_id}
+        where: { worker_id }
     })
 
     const we = await workers_events.findAll({
@@ -120,11 +183,11 @@ const showWorkerDetails = async (req, res) => {
 
         const events = await Event.findAll({
             where: {
-                [Op.or]: {event_id},
+                [Op.or]: { event_id },
             },
         });
 
-        const data = {worker, events};
+        const data = { worker, events };
         res.status(200).json({
             msg: "worker has been sent successfully",
             data: data
@@ -132,9 +195,179 @@ const showWorkerDetails = async (req, res) => {
     }
 }
 
+
+const showReservationsForWorker = async (req, res) => {
+
+
+    const token = req.headers["x-access-token"];
+
+    try {
+        await workerAuth(token);
+
+
+        const reservations = await Reservation.findAll({ where: { attendance: null } });
+
+        if (reservations.length === 0) {
+            throw new RError(404, "no reservations found");
+
+
+        }
+
+        res.status(200).send(responseMessage(true, "reservations have been retrieved successfully", reservations));
+
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
+
+    }
+}
+
+const confirmArrival = async (req, res) => {
+
+    const token = req.headers["x-access-token"];
+
+    const reservation_id = req.body.reservation_id;
+    const attendance_number = req.body.attendance_number;
+
+
+
+    try {
+
+        const worker = await workerAuth(token);
+
+        const worker_id = worker.worker_id;
+
+        const reservation = await Reservation.findOne({ where: { reservation_id } });
+
+        reservation.attendance = true;
+        reservation.attendance_number = attendance_number;
+        reservation.worker_id = worker_id;
+
+        if (attendance_number != reservation.number_of_places) {
+
+            const diff = reservation.number_of_places - attendance_number;
+
+
+            const event = await Event.findOne({ where: { event_id: reservation.event_id } });
+
+            event.available_places += diff;
+
+            event.save();
+
+        }
+
+        reservation.save();
+
+
+        const customer_id = reservation.customer_id;
+        
+        eventEmitter.emit('sendID', customer_id, reservation_id);
+        res.status(200).send(responseMessage(true, "reservations have been approved successfully", reservation));
+
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
+
+
+    }
+
+}
+
+
+const approveOrder = async (req, res)=>{
+  
+    const token = req.headers["x-access-token"];
+
+    const order_id = req.body.order_id;
+
+    try {
+
+
+        const worker = await workerAuth(token);
+  
+        const worker_id = worker.worker_id;
+
+        const order = await Order.findByPk(order_id)
+
+
+        if (order == null) {
+                
+            throw new RError(404, "order not found");
+
+
+        }
+       
+
+        const reservation = await Reservation.findByPk(order.reservation_id);
+
+        const wo = await workers_events.findOne({where:{
+            worker_id,
+            event_id:reservation.event_id
+
+        }})
+
+        order.worker_event_id = wo.worker_event_id;
+        order.save();
+        
+        res.status(200).send(responseMessage(true, "order has been approved", order));        
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+        
+    }
+
+}
+
+const retractOrder = async (req, res)=>{
+  
+    const token = req.headers["x-access-token"];
+
+    const order_id = req.body.order_id;
+
+    try {
+
+
+         await workerAuth(token);
+  
+
+        const order = await Order.findByPk(order_id)
+
+
+        if (order == null) {
+                
+            throw new RError(404, "order not found");
+
+
+        }
+       
+
+        order.worker_event_id = null;
+        order.save();
+        
+        res.status(200).send(responseMessage(true, "order has been retracted", order));        
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+        
+    }
+
+}
+
+
 module.exports = {
     createWorker,
+    login,
     showAllWorkers,
     deleteWorker,
-    showWorkerDetails
+    showWorkerDetails,
+    showReservationsForWorker,
+    confirmArrival,
+    approveOrder,
+    retractOrder
 }

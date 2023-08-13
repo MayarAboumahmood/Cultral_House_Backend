@@ -21,5 +21,8 @@ router.delete('/delete-reservation',  checkAuth.checkIfSuper, adminController.de
 router.get('/show-reservations',  checkAuth.checkIfSuper, adminController.showReservationsForAdmin)
 
 router.get('/stats', adminController.stats)
+router.post('/addWorkersToEvent', adminController.addWorkersToEvent)
+
+
 
 module.exports = router;

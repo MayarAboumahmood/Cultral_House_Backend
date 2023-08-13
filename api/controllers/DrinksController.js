@@ -11,7 +11,6 @@ const ValidationError = db.ValidationError;
 
 const addDrink = async (req, res) => {
 
-    //need to add worker and admin authentication (JWT) ?
     const {title, description, price, quantity, cost} = req.body;
 
     if (!req.file) {
@@ -134,7 +133,6 @@ const viewDrink = async (req, res) => {
 
 const updateDrink = async (req, res) => {
 
-    //need to add worker and admin authentication (JWT) ? in the drinkUpload middleware
     const {title, description, price, quantity, cost} = req.body;
     const drink_id = req.body.drink_id;
 
@@ -222,7 +220,6 @@ const updateDrink = async (req, res) => {
 
 const deleteDrink = async (req, res) => {
 
-    //need to add worker and admin authentication (JWT) ? in the drinkUpload middleware
     const drink_id = req.body.drink_id;
 
 

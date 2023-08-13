@@ -86,5 +86,22 @@ const SSEConfig  = (res)=>{
    
  });
       
+ app.use("/resIdToUser/:id",(req, res)=>{
+       
+    SSEConfig(res);
+    const id = req.params.id;
 
+    eventEmitter.on('sendID', (customer_id, reservaation_id) => {
+
+
+            if (id == customer_id) {
+                res.status(200).write(`data: reservation id is ${reservaation_id}\n\n`);
+
+            }
+    
+});
+
+
+});
+    
 

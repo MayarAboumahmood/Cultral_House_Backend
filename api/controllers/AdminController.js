@@ -408,6 +408,44 @@ const showReservationsForAdmin = async (req, res) => {
     }
 }
 
+const addWorkersToEvent = async (req, res)=>{
+
+
+    const token = req.headers["x-access-token"];
+
+    const event_id = req.body.event_id;
+    const workers = req.body.workers;
+
+
+
+    try {
+        await adminAuth(token);
+
+
+
+      
+        for(const worker of workers){
+
+            const {worker_id, cost} = worker;
+             await workers_events.create({
+                event_id,
+                worker_id,
+                cost
+            });
+
+        }
+        res.status(200).send(responseMessage(true, "workers have been added to the event successfully"));
+
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
+
+    }
+
+
+}
 module.exports = {
     createAdmin,
     login,
@@ -416,7 +454,8 @@ module.exports = {
     makeReservationByAdmin,
     deleteReservationByAdmin,
     showReservationsForAdmin,
-    stats
+    stats,
+    addWorkersToEvent
 
 };
 

@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
         },
         attendance: {
             type: DataTypes.BOOLEAN,
-            allowNull: true
+            allowNull: true,
+            default:false
         },
         number_of_places: {
             type: DataTypes.INTEGER,

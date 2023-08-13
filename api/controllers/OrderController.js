@@ -58,6 +58,7 @@ const makeOrder = async (req, res)=>{
 
         const ODS = [];
 
+        let cost = 0;
         for(const drink of drinks)
         {
             const { drink_id, quantity } = drink;
@@ -73,13 +74,17 @@ const makeOrder = async (req, res)=>{
             }, {transaction});
 
 
+            const d = await Drink.findByPk(drink_id);
+
+            cost += (quantity * d.price);
+
             ODS.push(od);
 
         }
         
        await transaction.commit();
 
-        ord = {order, ODS};
+        ord = {order, ODS, cost};
         res.status(201).send(responseMessage(true, "order is added", ord));
 
 
@@ -151,8 +156,24 @@ const showOrderDetails = async (req, res)=>{
 
         const ODS = await Orders_drinks.findAll({where: {order_id}});
 
+       
 
-        ord = {order, ODS};
+
+
+           
+let cost = 0;
+
+        for (let index = 0; index < ODS.length; index++) {
+            const element = ODS[index];
+
+            const d = await Drink.findByPk(element.drink_id);
+
+            cost += (element.quantity * d.price);
+            
+        }
+
+
+        ord = {order, ODS, cost};
         res.status(200).send(responseMessage(true, "order is retrieved", ord));        
     } catch (error) {
 
@@ -452,17 +473,11 @@ const showAllOrders = async (req, res)=>{
 
     try {
 
-       
-
-    
-// need admin/worker  auth???
-        const reservations = await Reservation.findAll();
-
-       const reservation_id = reservations.map(v=> v.reservation_id);
+  
 
         const orders = await Order.findAll({
             where :{
-                [Op.or]: {reservation_id}
+                worker_event_id:null
             }
         });
 
