@@ -4,8 +4,7 @@ const responseMessage = require("../middleware/responseHandler");
 const RError = require("../middleware/error.js");
 const adminAuth = require("../middleware/adminAuth");
 
-var event = require('events');
-var eventEmitter = new event.EventEmitter();
+const eventEmitter = require("./eventEmitter");
 
 const Event = db.events;
 const Artist = db.artists;
@@ -95,10 +94,11 @@ const createEvent = async (req, res) => {
             details: event
         })
 
+        eventEmitter.emit('create_new_event');
+
 
         res.status(201).send(responseMessage(true, "event is added", event));
 
-        eventEmitter.emit('create_new_event');
     } catch (errors) {
 
         await transaction.rollback();

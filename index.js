@@ -14,8 +14,9 @@ const orders = require("./api/routes/order");
 const reservations = require("./api/routes/reservation");
 const cors = require('cors');
 dotenv.config();
-var event = require('events');
-var eventEmitter = new event.EventEmitter();
+
+const eventEmitter = require("./api/controllers/eventEmitter");
+
 
 
 const app = express();
@@ -74,6 +75,7 @@ const SSEConfig  = (res)=>{
 
        
         SSEConfig(res);
+
         eventEmitter.on('create_new_event', () => {
 
         res.status(200).write(`data: new Event\n\n`);
