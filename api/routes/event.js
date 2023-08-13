@@ -14,9 +14,9 @@ router.delete('/delete', eventController.deleteEvent)
 
 router.put('/update', eventController.updateEvent)
 
-router.get('/show-event', eventController.showEventDetailsForCustomer);
+router.post('/show-event', eventController.showEventDetailsForCustomer);
 
-router.get('/show-event-for-admin', eventController.showEventDetailsForAdmin);
+router.post('/show-event-for-admin', eventController.showEventDetailsForAdmin);
 
 
 

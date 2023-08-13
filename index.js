@@ -13,9 +13,10 @@ const reports = require("./api/routes/report");
 const orders = require("./api/routes/order");
 const reservations = require("./api/routes/reservation");
 const cors = require('cors');
-
-
 dotenv.config();
+var event = require('events');
+var eventEmitter = new event.EventEmitter();
+
 
 const app = express();
 const port = process.env.PORT;
@@ -48,7 +49,6 @@ db.sequelize.sync({alter: true}).then(() => {
     console.log("db has been re sync")
 })
 
-
 app.use((req, res, next) => {
     res.header('Access_Control_Allow_Origin')
     res.header('Access_Control_Allow_Headers', 'Origin , X-Requested-With , Content-Type , Accept , Authorization');
@@ -59,5 +59,30 @@ app.use((req, res, next) => {
     }
     next();
 })
+
+const SSEConfig  = (res)=>{
+    res.set("Content-Type", "text/event-stream");
+    res.set("Connection", "keep-alive");
+    res.set("Cache-Control", "no-cache");
+    res.set("Access-Control-Allow-Origin", "*");
+
+    res.status(200).write(`data: init\n\n`);
+
+}
+
+ app.use("/notifications",(_, res)=>{
+
+       
+        SSEConfig(res);
+        eventEmitter.on('create_new_event', () => {
+
+        res.status(200).write(`data: new Event\n\n`);
+            
+        
+    });
+
+   
+ });
+      
 
 
