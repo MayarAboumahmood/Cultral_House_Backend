@@ -288,17 +288,15 @@ const showEventDetailsForCustomer = async (req, res) => {
 
     try {
 
-        const event = await Event.findOne({where: {event_id}, include: Photos,include:
+        const event = await Event.findOne({where: {event_id}, include: [
+            Photos,
             {
                 model: Artist_Event,
                 include: Artist
-            }});
-
-        const pictures = await Photos.findAll({
-            where: {
-                event_id
             }
-        });
+        ]});
+
+       
 
 
         res.status(200).send(responseMessage(true, "event is sent", event));
@@ -327,11 +325,14 @@ const showEventDetailsForAdmin = async (req, res) => {
 
     try {
 
-        const event = await Event.findOne({where: {event_id}, include: Photos,  include:
+        const event = await Event.findOne({where: {event_id}, include: [
+            Photos,
             {
                 model: Artist_Event,
                 include: Artist
-            }});
+            }
+        ]});
+
 
 
         const reservations = await Reservation.findAll({
