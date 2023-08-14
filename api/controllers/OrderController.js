@@ -86,7 +86,7 @@ const makeOrder = async (req, res) => {
         ord = { order, ODS, cost };
 
 
-        eventEmitter.emit('create_new_event');
+        eventEmitter.emit('create_new_order');
 
         res.status(201).send(responseMessage(true, "order is added", ord));
 

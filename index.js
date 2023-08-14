@@ -27,17 +27,16 @@ app.listen(port, () => {
 
 })
 app.use(cors());
-app.use('/images',express.static('images'))
+app.use('/images', express.static('images'))
 app.use(morgan('dev'))
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use('/admins', admins);
 app.use('/customers', customers);
 app.use('/drinks', drinks);
-
 app.use('/events', events);
 app.use('/artist', artists);
-app.use("/worker",workers)
+app.use("/worker", workers)
 app.use('/reports', reports);
 app.use('/orders', orders);
 app.use('/reservations', reservations);
@@ -45,7 +44,7 @@ app.use('/reservations', reservations);
 app.use(express.json())
 
 
-db.sequelize.sync({alter: true}).then(() => {
+db.sequelize.sync({ alter: true }).then(() => {
 
     console.log("db has been re sync")
 })
@@ -61,7 +60,7 @@ app.use((req, res, next) => {
     next();
 })
 
-const SSEConfig  = (res)=>{
+const SSEConfig = (res) => {
     res.set("Content-Type", "text/event-stream");
     res.set("Connection", "keep-alive");
     res.set("Cache-Control", "no-cache");
@@ -71,52 +70,52 @@ const SSEConfig  = (res)=>{
 
 }
 
- app.use("/notifications",(_, res)=>{
+app.use("/notifications", (_, res) => {
 
-       
-        SSEConfig(res);
 
-        eventEmitter.on('create_new_event', () => {
+    SSEConfig(res);
+
+    eventEmitter.on('create_new_event', () => {
 
         res.status(200).write(`data: new Event\n\n`);
-            
-        
+
+
     });
 
-   
- });
 
- app.use("/notificationsForOrders",(_, res)=>{
+});
 
-       
+app.use("/notificationsForOrders", (_, res) => {
+
+
     SSEConfig(res);
 
     eventEmitter.on('create_new_order', () => {
 
-    res.status(200).write(`data: new Order\n\n`);
-        
-    
-});
+        res.status(200).write(`data: new Order\n\n`);
+
+
+    });
 
 
 });
-      
- app.use("/resIdToUser/:id",(req, res)=>{
-       
+
+app.use("/resIdToUser/:id", (req, res) => {
+
     SSEConfig(res);
     const id = req.params.id;
 
     eventEmitter.on('sendID', (customer_id, reservaation_id) => {
 
 
-            if (id == customer_id) {
-                res.status(200).write(`data: reservation id is ${reservaation_id}\n\n`);
+        if (id == customer_id) {
+            res.status(200).write(`data: reservation id is ${reservaation_id}\n\n`);
 
-            }
-    
+        }
+
+    });
+
+
 });
 
-
-});
-    
 

@@ -16,6 +16,12 @@ const Op = db.Op;
 const Reservation = db.reservations;
 
 const Order = db.orders;
+const Orders_drinks = db.orders_drinks;
+
+const Drink = db.drinks;
+const sequelize = db.sequelize;
+
+const ValidationError = db.ValidationError;
 
 
 
@@ -205,7 +211,7 @@ const showReservationsForWorker = async (req, res) => {
         await workerAuth(token);
 
 
-        const reservations = await Reservation.findAll({ where: { attendance: null } });
+        const reservations = await Reservation.findAll({ where: { attendance: false } });
 
         if (reservations.length === 0) {
             throw new RError(404, "no reservations found");
@@ -360,6 +366,98 @@ const retractOrder = async (req, res)=>{
 }
 
 
+const makeOrderByWorker = async (req, res) => {
+
+
+    const token = req.headers["x-access-token"];
+
+    const drinks = req.body.drinks;
+
+
+    if (!drinks) {
+        return res.status(400).send(responseMessage(false, "insert drinks"));
+
+
+    }
+
+    let transaction;
+
+    try {
+
+        transaction = await sequelize.transaction();
+
+        await workerAuth(token);
+
+
+
+
+        const order = await Order.create({
+
+            order_date: Date(),
+            reservation_id: null,
+
+        }, { transaction });
+
+
+
+        const ODS = [];
+
+        let cost = 0;
+        for (const drink of drinks) {
+            const { drink_id, quantity } = drink;
+
+
+            const od = await Orders_drinks.create({
+                order_id: order.order_id,
+
+                drink_id,
+
+                quantity
+
+            }, { transaction });
+
+
+            const d = await Drink.findByPk(drink_id);
+
+            cost += (quantity * d.price);
+
+            ODS.push(od);
+
+        }
+
+        await transaction.commit();
+
+        ord = { order, ODS, cost };
+
+
+        eventEmitter.emit('create_new_order');
+
+        res.status(201).send(responseMessage(true, "order is added", ord));
+
+
+
+    } catch (errors) {
+
+
+        await transaction.rollback();
+
+        var statusCode = errors.statusCode || 500;
+        if (errors instanceof ValidationError) {
+
+            statusCode = 400;
+
+        }
+
+        return res.status(statusCode).send(responseMessage(false, errors.message));
+
+
+
+    }
+
+
+
+}
+
 module.exports = {
     createWorker,
     login,
@@ -369,5 +467,6 @@ module.exports = {
     showReservationsForWorker,
     confirmArrival,
     approveOrder,
-    retractOrder
+    retractOrder,
+    makeOrderByWorker
 }

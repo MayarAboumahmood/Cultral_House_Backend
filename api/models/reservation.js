@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         attendance: {
             type: DataTypes.BOOLEAN,
             allowNull: true,
-            default:false
+            defaultValue:false
         },
         number_of_places: {
             type: DataTypes.INTEGER,

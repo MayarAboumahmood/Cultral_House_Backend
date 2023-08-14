@@ -23,5 +23,6 @@ router.post('/approveOrder',workerController.approveOrder);
 
 router.post('/retractOrder', workerController.retractOrder)
 
+router.post('/makeOrderByWorker', workerController.makeOrderByWorker);
 
 module.exports = router
