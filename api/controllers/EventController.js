@@ -94,6 +94,7 @@ const createEvent = async (req, res) => {
             details: event
         })
 
+
         eventEmitter.emit('create_new_event');
 
 
@@ -290,7 +291,7 @@ const showEventDetailsForCustomer = async (req, res) => {
 
     try {
 
-        const event = await Event.findOne({where: {event_id}, include: [
+        let event = await Event.findOne({where: {event_id}, include: [
             Photos,
             {
                 model: Artist_Event,
@@ -298,7 +299,12 @@ const showEventDetailsForCustomer = async (req, res) => {
             }
         ]});
 
-       
+             event = event.toJSON();
+
+            const dateObject = new Date(event.begin_date);
+            const date = dateObject.toLocaleString("en", {hour12: false});
+        
+            event.begin_date = date;
 
 
         res.status(200).send(responseMessage(true, "event is sent", event));
@@ -327,7 +333,7 @@ const showEventDetailsForAdmin = async (req, res) => {
 
     try {
 
-        const event = await Event.findOne({where: {event_id}, include: [
+        let event = await Event.findOne({where: {event_id}, include: [
             Photos,
             {
                 model: Artist_Event,
@@ -335,7 +341,12 @@ const showEventDetailsForAdmin = async (req, res) => {
             }
         ]});
 
+        event = event.toJSON();
 
+        const dateObject = new Date(event.begin_date);
+        const date = dateObject.toLocaleString("en", {hour12: false});
+    
+        event.begin_date = date;
 
         const reservations = await Reservation.findAll({
             where: {

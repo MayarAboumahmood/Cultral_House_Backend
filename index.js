@@ -85,6 +85,21 @@ const SSEConfig  = (res)=>{
 
    
  });
+
+ app.use("/notificationsForOrders",(_, res)=>{
+
+       
+    SSEConfig(res);
+
+    eventEmitter.on('create_new_order', () => {
+
+    res.status(200).write(`data: new Order\n\n`);
+        
+    
+});
+
+
+});
       
  app.use("/resIdToUser/:id",(req, res)=>{
        

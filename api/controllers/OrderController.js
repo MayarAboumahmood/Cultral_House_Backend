@@ -4,6 +4,7 @@ const responseMessage = require("../middleware/responseHandler");
 const RError = require("../middleware/error.js");
 const customerAuth = require("../middleware/customerAuth");
 
+const eventEmitter = require("./eventEmitter");
 
 const Reservation = db.reservations;
 const Order = db.orders;
@@ -15,33 +16,32 @@ const ValidationError = db.ValidationError;
 
 
 
-const makeOrder = async (req, res)=>{
+const makeOrder = async (req, res) => {
 
-    //send the order's cost in the response ??
 
     const token = req.headers["x-access-token"];
 
     const reservation_id = req.body.reservation_id;
     const drinks = req.body.drinks;
 
-    if(!reservation_id){
-        return res.status(400).send(responseMessage(false,"insert reservaation_id"));
+    if (!reservation_id) {
+        return res.status(400).send(responseMessage(false, "insert reservaation_id"));
 
     }
-    if(!drinks){
-        return res.status(400).send(responseMessage(false,"insert drinks"));
+    if (!drinks) {
+        return res.status(400).send(responseMessage(false, "insert drinks"));
 
 
     }
 
-     let transaction;
+    let transaction;
 
     try {
 
         transaction = await sequelize.transaction();
 
 
-          await customerAuth(token);
+        await customerAuth(token);
 
 
 
@@ -52,26 +52,25 @@ const makeOrder = async (req, res)=>{
             order_date: Date(),
             reservation_id,
 
-        },{transaction});
+        }, { transaction });
 
 
 
         const ODS = [];
 
         let cost = 0;
-        for(const drink of drinks)
-        {
+        for (const drink of drinks) {
             const { drink_id, quantity } = drink;
 
 
             const od = await Orders_drinks.create({
-                order_id : order.order_id,
+                order_id: order.order_id,
 
                 drink_id,
-    
+
                 quantity
 
-            }, {transaction});
+            }, { transaction });
 
 
             const d = await Drink.findByPk(drink_id);
@@ -81,48 +80,52 @@ const makeOrder = async (req, res)=>{
             ODS.push(od);
 
         }
-        
-       await transaction.commit();
 
-        ord = {order, ODS, cost};
+        await transaction.commit();
+
+        ord = { order, ODS, cost };
+
+
+        eventEmitter.emit('create_new_event');
+
         res.status(201).send(responseMessage(true, "order is added", ord));
 
 
-    
+
     } catch (errors) {
 
 
         await transaction.rollback();
-       
+
         var statusCode = errors.statusCode || 500;
         if (errors instanceof ValidationError) {
 
             statusCode = 400;
-            
+
         }
 
         return res.status(statusCode).send(responseMessage(false, errors.message));
 
 
-        
+
     }
 
 
 
 }
 
-const showOrderDetails = async (req, res)=>{
+const showOrderDetails = async (req, res) => {
 
 
     const token = req.headers["x-access-token"];
-  
+
 
     const order_id = req.body.order_id;
 
 
     if (!order_id) {
-        
-        return res.status(400).send(responseMessage(false,"choose order to show"));
+
+        return res.status(400).send(responseMessage(false, "choose order to show"));
 
 
     }
@@ -130,9 +133,9 @@ const showOrderDetails = async (req, res)=>{
 
     try {
 
-       const customer = await customerAuth(token);
+        const customer = await customerAuth(token);
 
-       const customer_id = customer.customer_id;
+        const customer_id = customer.customer_id;
 
 
         const order = await Order.findByPk(order_id);
@@ -143,7 +146,7 @@ const showOrderDetails = async (req, res)=>{
         }
 
         const reservation = await Reservation.findByPk(order.reservation_id);
-       
+
 
         const check = reservation.customer_id === customer_id;
 
@@ -154,14 +157,14 @@ const showOrderDetails = async (req, res)=>{
 
         }
 
-        const ODS = await Orders_drinks.findAll({where: {order_id}});
-
-       
+        const ODS = await Orders_drinks.findAll({ where: { order_id } });
 
 
 
-           
-let cost = 0;
+
+
+
+        let cost = 0;
 
         for (let index = 0; index < ODS.length; index++) {
             const element = ODS[index];
@@ -169,44 +172,44 @@ let cost = 0;
             const d = await Drink.findByPk(element.drink_id);
 
             cost += (element.quantity * d.price);
-            
+
         }
 
 
-        ord = {order, ODS, cost};
-        res.status(200).send(responseMessage(true, "order is retrieved", ord));        
+        ord = { order, ODS, cost };
+        res.status(200).send(responseMessage(true, "order is retrieved", ord));
     } catch (error) {
 
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
 
-        
+
     }
 
-   
+
 }
 
 
-const updateOrder = async (req, res)=>{
+const updateOrder = async (req, res) => {
 
     const token = req.headers["x-access-token"];
-  
-    const drinks  = req.body.drinks;
+
+    const drinks = req.body.drinks;
     const order_id = req.body.order_id;
 
 
-    if(!order_id){
+    if (!order_id) {
 
 
-        return res.status(400).send(responseMessage(false,"choose order"));
+        return res.status(400).send(responseMessage(false, "choose order"));
 
 
     }
 
     if (!drinks) {
-        
-        return res.status(400).send(responseMessage(false,"update something"));
+
+        return res.status(400).send(responseMessage(false, "update something"));
 
 
     }
@@ -215,81 +218,80 @@ const updateOrder = async (req, res)=>{
 
     try {
 
-         await customerAuth(token);
+        await customerAuth(token);
 
 
 
-        const oldODS = await Orders_drinks.findAll({where: {order_id}});
+        const oldODS = await Orders_drinks.findAll({ where: { order_id } });
 
         transaction = await sequelize.transaction();
 
 
-        for(od of oldODS){
+        for (od of oldODS) {
 
-            await od.destroy({transaction});
+            await od.destroy({ transaction });
         }
 
 
 
         const ODS = [];
 
-        for(const drink of drinks)
-        {
+        for (const drink of drinks) {
             const { drink_id, quantity } = drink;
 
 
             const od = await Orders_drinks.create({
-                order_id : order_id,
+                order_id: order_id,
 
                 drink_id,
-    
+
                 quantity
 
-            }, {transaction});
+            }, { transaction });
 
 
             ODS.push(od);
 
         }
-        
+
         await transaction.commit();
-        res.status(200).send(responseMessage(true, "order is updated", ODS));        
+        res.status(200).send(responseMessage(true, "order is updated", ODS));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
 
-        
+
     }
 
 
 }
 
 
-const deleteOrder = async (req, res)=>{
+const deleteOrder = async (req, res) => {
 
 
 
     const token = req.headers["x-access-token"];
-  
+
     const order_id = req.body.order_id;
 
 
     if (!order_id) {
-        
-        return res.status(400).send(responseMessage(false,"choose order"));
+
+        return res.status(400).send(responseMessage(false, "choose order"));
 
     }
 
 
     try {
 
-    
+
         const customer = await customerAuth(token);
 
         const customer_id = customer.customer_id;
- 
- 
+
+
 
         const order = await Order.findByPk(order_id);
 
@@ -311,12 +313,12 @@ const deleteOrder = async (req, res)=>{
         await order.destroy();
 
 
-        res.status(200).send(responseMessage(true, "order is deleted"));        
+        res.status(200).send(responseMessage(true, "order is deleted"));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-        
+
     }
 
 
@@ -324,54 +326,54 @@ const deleteOrder = async (req, res)=>{
 }
 
 
-const showOrders = async (req, res)=>{
+const showOrders = async (req, res) => {
 
     const token = req.headers["x-access-token"];
-  
+
 
     try {
 
-       
 
-    
+
+
         const customer = await customerAuth(token);
 
         const customer_id = customer.customer_id;
 
 
-        const reservations = await Reservation.findAll({where:{customer_id}});
+        const reservations = await Reservation.findAll({ where: { customer_id } });
 
-       const reservation_id = reservations.map(v=> v.reservation_id);
+        const reservation_id = reservations.map(v => v.reservation_id);
 
-       ;
+        ;
 
         const orders = await Order.findAll({
-            where :{
-                [Op.or]: {reservation_id}
+            where: {
+                [Op.or]: { reservation_id }
             }
         });
 
 
         if (orders.length == 0) {
-                
+
             throw new RError(404, "no orders found");
 
 
         }
 
-        
-        res.status(200).send(responseMessage(true, "orders are retrieved", orders));        
+
+        res.status(200).send(responseMessage(true, "orders are retrieved", orders));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-        
+
     }
 
 }
 
 
-const browseBills = async (req, res)=>{
+const browseBills = async (req, res) => {
 
     const token = req.headers["x-access-token"];
 
@@ -381,125 +383,127 @@ const browseBills = async (req, res)=>{
 
         const customer_id = customer.customer_id;
 
-        const reservations = await Reservation.findAll({where:{customer_id}});
+        const reservations = await Reservation.findAll({ where: { customer_id } });
 
-       let result = [];
-       let temp;
+        let result = [];
+        let temp;
 
-       for(const resrvation of reservations){
-        temp = [];
-        const {reservation_id} = resrvation;
-        const orders = await Order.findAll({
-            where :{
-            reservation_id
+        for (const resrvation of reservations) {
+            temp = [];
+            const { reservation_id } = resrvation;
+            const orders = await Order.findAll({
+                where: {
+                    reservation_id
+                }
+            });
+
+            if (orders.length == 0) {
+
+                throw new RError(404, "no orders found");
+
+
             }
-        });
 
-        if (orders.length == 0) {
-                
-            throw new RError(404, "no orders found");
+            const order_id = orders.map(v => v.order_id);
+            const ODS = await Orders_drinks.findAll({
+                where: {
+                    [Op.or]: { order_id }
+                }
+            });
+
+            const drink_id = ODS.map(v => v.drink_id);
+
+            const drinks = await Drink.findAll({
+                where: {
+                    [Op.or]: { drink_id }
+                }
+            });
 
 
-        }
+            let t = 0;
 
-        const order_id = orders.map(v=> v.order_id);
-        const ODS = await Orders_drinks.findAll({
-            where :{
-                [Op.or]: {order_id}
-            }
-        });
+            for (const drink of drinks) {
+                const { title, price, drink_id } = drink;
 
-        const drink_id = ODS.map(v=> v.drink_id);
+                for (let index = 0; index < ODS.length; index++) {
 
-        const drinks = await Drink.findAll({
-            where :{
-                [Op.or]: {drink_id}
-            }
-        });
+                    if (ODS[index].drink_id === drink_id) {
 
-           
-        let t = 0;
+                        const { quantity } = ODS[index];
 
-       for(const drink of drinks){
-        const {title, price, drink_id} = drink;
+                        const v = price * quantity;
+                        const obj = {
+                            drink: title,
+                            price: price,
+                            quantity: quantity,
+                            total: v
+                        }
 
-        for (let index = 0; index < ODS.length; index++) {
+                        t += v;
+                        temp.push(obj);
 
-            if (ODS[index].drink_id === drink_id) {
+                    }
 
-                const {quantity} = ODS[index];
-
-                const v = price * quantity;
-                const obj = {
-                    drink: title,
-                    price: price,
-                    quantity: quantity,
-                    total: v
                 }
 
-                t+=v;
-                temp.push(obj);
+
 
             }
-            
+            temp.push({ totalAmount: t })
+            result.push(temp);
+
+
         }
 
 
 
-       }
-       temp.push({totalAmount: t})
-       result.push(temp);
 
 
-       }
-
-
-
-
-
-       res.status(200).send(responseMessage(true, "bills are retrieved", result));        
+        res.status(200).send(responseMessage(true, "bills are retrieved", result));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-        
+
     }
 
 }
 
 // for admin/worker
-const showAllOrders = async (req, res)=>{
-  
+const showAllOrders = async (req, res) => {
+
 
     try {
 
-  
+
 
         const orders = await Order.findAll({
-            where :{
-                worker_event_id:null
+            where: {
+                worker_event_id: null
             }
         });
 
 
         if (orders.length == 0) {
-                
+
             throw new RError(404, "no orders found");
 
 
         }
 
-        
-        res.status(200).send(responseMessage(true, "orders are retrieved", orders));        
+
+        res.status(200).send(responseMessage(true, "orders are retrieved", orders));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-        
+
     }
 
 }
 
-module.exports = { makeOrder, showOrderDetails, updateOrder, 
-     deleteOrder, showOrders, browseBills, showAllOrders};
+module.exports = {
+    makeOrder, showOrderDetails, updateOrder,
+    deleteOrder, showOrders, browseBills, showAllOrders
+};
 
