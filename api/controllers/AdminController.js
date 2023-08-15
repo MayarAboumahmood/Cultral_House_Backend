@@ -461,9 +461,18 @@ try {
 
   for (let index = 0; index < acts.length; index++) {
     const element = acts[index];
-    const {action, details} = element;
+    let {action, details, time} = element;
 
-    const act = {action, details};
+
+
+    const dateObject = new Date(time);
+    const date = dateObject.toLocaleString("en", {hour12: false});
+
+time = date;
+
+
+
+    const act = {action,time ,details};
 
     actions.push(act);
     
