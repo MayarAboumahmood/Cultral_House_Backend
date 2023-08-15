@@ -446,6 +446,43 @@ const addWorkersToEvent = async (req, res)=>{
 
 
 }
+
+const getActions = async (req, res)=>{
+const admin_id = req.body.admin_id;
+
+
+try {
+
+
+
+  const acts = await Actions.findAll({where:{admin_id}});
+
+  let actions = [];
+
+  for (let index = 0; index < acts.length; index++) {
+    const element = acts[index];
+    const {action, details} = element;
+
+    const act = {action, details};
+
+    actions.push(act);
+    
+  }
+    
+
+    
+    res.status(200).send(responseMessage(true, "wactions retrieved successfully", actions));
+
+} catch (error) {
+
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).send(responseMessage(false, error.message));
+
+
+}
+
+
+}
 module.exports = {
     createAdmin,
     login,
@@ -455,7 +492,8 @@ module.exports = {
     deleteReservationByAdmin,
     showReservationsForAdmin,
     stats,
-    addWorkersToEvent
+    addWorkersToEvent,
+    getActions
 
 };
 
