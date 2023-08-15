@@ -62,7 +62,9 @@ const createEvent = async (req, res) => {
 
         const event = await Event.create(data, {transaction});
 
-        for (const artist_id of artists) {
+        
+        const artists_ids = artists.split(',').map(id => id.trim());
+        for (const artist_id of artists_ids) {
             const artist = await Artist.findByPk(artist_id)
             if (!artist) {
                 throw new RError(404, "artist not found " + artist_id);
