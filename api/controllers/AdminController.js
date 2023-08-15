@@ -6,8 +6,9 @@ const jwt = require("jsonwebtoken");
 const responseMessage = require("../middleware/responseHandler");
 const RError = require("../middleware/error.js");
 const adminAuth = require("../middleware/adminAuth");
-const {where} = require("sequelize");
+const { where } = require("sequelize");
 
+const eventEmitter = require("./eventEmitter");
 
 const Reservation = db.reservations;
 const Event = db.events;
@@ -23,7 +24,7 @@ const Actions = db.actions;
 
 const createAdmin = async (req, res) => {
     try {
-        const {admin_name, email, password, is_super} = req.body;
+        const { admin_name, email, password, is_super } = req.body;
         const data = {
             admin_name,
             email,
@@ -45,9 +46,9 @@ const createAdmin = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const {email, password} = req.body;
+        const { email, password } = req.body;
         if (!email || !password) {
-            res.status(400).json({msg: "validation error"})
+            res.status(400).json({ msg: "validation error" })
         }
 
         //find an admin by their email
@@ -66,7 +67,7 @@ const login = async (req, res) => {
             //generate token with the admin's id and the secretKey in the env file
 
             if (isSame) {
-                let token = jwt.sign({admin: admin}, process.env.SECRET, null, {
+                let token = jwt.sign({ admin: admin }, process.env.SECRET, null, {
                     expiresIn: 24 * 60 * 60 * 1000,
                 });
 
@@ -78,10 +79,10 @@ const login = async (req, res) => {
                     token: token
                 });
             } else {
-                return res.status(401).json({msg: "Authentication failed"});
+                return res.status(401).json({ msg: "Authentication failed" });
             }
         } else {
-            return res.status(401).json({msg: "Authentication failed"});
+            return res.status(401).json({ msg: "Authentication failed" });
         }
     } catch (error) {
         console.log(error);
@@ -248,8 +249,8 @@ const deleteReservationByAdmin = async (req, res) => {
 
         event.available_places += number_of_places;
 
-        await reservation.destroy({transaction});
-        await event.save({transaction});
+        await reservation.destroy({ transaction });
+        await event.save({ transaction });
 
         await transaction.commit();
 
@@ -278,7 +279,7 @@ const deleteReservationByAdmin = async (req, res) => {
 }
 const stats = async (req, res) => {
 
-// for cost
+    // for cost
     const artistsCost = await Event.sum("artists_cost");
     const workersCost = await workers_events.sum("cost");
     let drinksCost = 0;
@@ -287,7 +288,7 @@ const stats = async (req, res) => {
     //for proceeds
 
     let ordersProceeds = 0;
-    const OD = await Orders_drinks.findAll({include: Drinks});
+    const OD = await Orders_drinks.findAll({ include: Drinks });
 
 
     OD.forEach(od => {
@@ -295,31 +296,32 @@ const stats = async (req, res) => {
             ordersProceeds += (od["quantity"] * od["drink"]["price"]);
 
         }
-        
+
 
     });
 
     let reservationsProceeds = 0;
 
-    const reservations = await Reservation.findAll({where:{
-         attendance: {
-            [db.Op.eq]: true
-        }
-    },
+    const reservations = await Reservation.findAll({
+        where: {
+            attendance: {
+                [db.Op.eq]: true
+            }
+        },
 
-include: Event
-});
+        include: Event
+    });
 
-reservations.forEach(res => {
-    
-    reservationsProceeds += (res["attendance_number"] * res["event"]["ticket_price"]);
+    reservations.forEach(res => {
 
-    
-    
+        reservationsProceeds += (res["attendance_number"] * res["event"]["ticket_price"]);
 
-});
-  
-//////
+
+
+
+    });
+
+    //////
 
     const upcoming_events = await Event.count({
         where: {
@@ -350,7 +352,7 @@ reservations.forEach(res => {
 
     drinks.forEach(drink => {
         drinks_quantity += drink["quantity"];
-        drinksCost += (drink["cost"] *  drink["quantity"]);
+        drinksCost += (drink["cost"] * drink["quantity"]);
     })
 
     const admins = await Admin.count(
@@ -364,7 +366,7 @@ reservations.forEach(res => {
 
     const totalCost = artistsCost + workersCost + drinksCost;
     const proceeds = ordersProceeds + reservationsProceeds;
-const profit = proceeds - totalCost;
+    const profit = proceeds - totalCost;
 
     return res.status(200).json({
         "upcoming_events": upcoming_events,
@@ -374,7 +376,7 @@ const profit = proceeds - totalCost;
         "drinks": drinks_quantity,
         "admins": admins,
         "totalCost": totalCost,
-        "proceeds":proceeds,
+        "proceeds": proceeds,
         "profit": profit
     })
 
@@ -408,7 +410,7 @@ const showReservationsForAdmin = async (req, res) => {
     }
 }
 
-const addWorkersToEvent = async (req, res)=>{
+const addWorkersToEvent = async (req, res) => {
 
 
     const token = req.headers["x-access-token"];
@@ -423,17 +425,20 @@ const addWorkersToEvent = async (req, res)=>{
 
 
 
-      
-        for(const worker of workers){
 
-            const {worker_id, cost} = worker;
-             await workers_events.create({
+        for (const worker of workers) {
+
+            const { worker_id, cost } = worker;
+            await workers_events.create({
                 event_id,
                 worker_id,
                 cost
             });
 
         }
+
+        eventEmitter.emit('send_event_id', event_id);
+
         res.status(200).send(responseMessage(true, "workers have been added to the event successfully"));
 
     } catch (error) {
@@ -447,48 +452,48 @@ const addWorkersToEvent = async (req, res)=>{
 
 }
 
-const getActions = async (req, res)=>{
-const admin_id = req.body.admin_id;
+const getActions = async (req, res) => {
+    const admin_id = req.body.admin_id;
 
 
-try {
-
-
-
-  const acts = await Actions.findAll({where:{admin_id}});
-
-  let actions = [];
-
-  for (let index = 0; index < acts.length; index++) {
-    const element = acts[index];
-    let {action, details, time} = element;
+    try {
 
 
 
-    const dateObject = new Date(time);
-    const date = dateObject.toLocaleString("en", {hour12: false});
+        const acts = await Actions.findAll({ where: { admin_id } });
 
-time = date;
+        let actions = [];
 
-
-
-    const act = {action,time ,details};
-
-    actions.push(act);
-    
-  }
-    
-
-    
-    res.status(200).send(responseMessage(true, "wactions retrieved successfully", actions));
-
-} catch (error) {
-
-    const statusCode = error.statusCode || 500;
-    return res.status(statusCode).send(responseMessage(false, error.message));
+        for (let index = 0; index < acts.length; index++) {
+            const element = acts[index];
+            let { action, details, time } = element;
 
 
-}
+
+            const dateObject = new Date(time);
+            const date = dateObject.toLocaleString("en", { hour12: false });
+
+            time = date;
+
+
+
+            const act = { action, time, details };
+
+            actions.push(act);
+
+        }
+
+
+
+        res.status(200).send(responseMessage(true, "wactions retrieved successfully", actions));
+
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
+
+    }
 
 
 }
@@ -506,4 +511,3 @@ module.exports = {
 
 };
 
-                                                                                                                                        

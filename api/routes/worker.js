@@ -18,6 +18,8 @@ router.post('/login',checkCredentials,workerController.login);
 
 router.get('/show-reservations',workerController.showReservationsForWorker);
 router.post('/confirmArrival',workerController.confirmArrival);
+router.post('/retractConfirmation',workerController.retractConfirmation);
+
 
 router.post('/approveOrder',workerController.approveOrder);
 

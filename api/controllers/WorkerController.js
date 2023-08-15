@@ -206,20 +206,34 @@ const showReservationsForWorker = async (req, res) => {
 
 
     const token = req.headers["x-access-token"];
+    const event_id = req.body.event_id;
 
     try {
         await workerAuth(token);
 
 
-        const reservations = await Reservation.findAll({ where: { attendance: false } });
+        const reservations = await Reservation.findAll({ where: { event_id } });
 
         if (reservations.length === 0) {
             throw new RError(404, "no reservations found");
-
-
         }
 
-        res.status(200).send(responseMessage(true, "reservations have been retrieved successfully", reservations));
+        let hasCome = [];
+        let notCome = [];
+
+        for(const reservation of reservations){
+
+            if (reservation.attendance == true) {
+                hasCome.push(reservation);
+            }
+            else{
+                notCome.push(reservation);
+
+            }
+        }
+        const ress = {notCome, hasCome};
+
+        res.status(200).send(responseMessage(true, "reservations have been retrieved successfully", ress));
 
     } catch (error) {
 
@@ -270,6 +284,57 @@ const confirmArrival = async (req, res) => {
         const customer_id = reservation.customer_id;
         
         eventEmitter.emit('sendID', customer_id, reservation_id);
+        res.status(200).send(responseMessage(true, "reservations have been approved successfully", reservation));
+
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
+
+
+    }
+
+}
+
+
+const retractConfirmation = async (req, res) => {
+
+    const token = req.headers["x-access-token"];
+
+    const reservation_id = req.body.reservation_id;
+   
+
+
+
+    try {
+
+        const worker = await workerAuth(token);
+
+
+        const reservation = await Reservation.findOne({ where: { reservation_id } });
+
+        if (reservation.attendance_number != reservation.number_of_places) {
+
+            const diff = reservation.number_of_places - attendance_number;
+
+
+            const event = await Event.findOne({ where: { event_id: reservation.event_id } });
+
+            event.available_places -= diff;
+
+            event.save();
+
+        }
+
+        reservation.attendance = false;
+        reservation.attendance_number = null;
+        reservation.worker_id = null;
+
+      
+
+        reservation.save();
+
         res.status(200).send(responseMessage(true, "reservations have been approved successfully", reservation));
 
     } catch (error) {
@@ -468,5 +533,6 @@ module.exports = {
     confirmArrival,
     approveOrder,
     retractOrder,
-    makeOrderByWorker
+    makeOrderByWorker,
+    retractConfirmation
 }
