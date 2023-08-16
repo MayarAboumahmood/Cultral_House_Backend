@@ -472,16 +472,23 @@ const browseBills = async (req, res) => {
 // for admin/worker
 const showAllOrders = async (req, res) => {
 
+// need streamin to send the event_id 
 
     try {
 
 
 
         let orders = await Order.findAll({
-            where: {
-                worker_event_id: null
-            },
-            include: [Reservation, Orders_drinks]
+            where: 
+                {worker_event_id: null}
+            ,
+            include: [Reservation,
+                 {model:Orders_drinks,
+                
+                    include:Drink
+                }
+                
+                ]
         });
 
 
