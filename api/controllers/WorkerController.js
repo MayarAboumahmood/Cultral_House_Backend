@@ -26,7 +26,6 @@ const ValidationError = db.ValidationError;
 
 
 const createWorker = async (req, res) => {
-    console.log("admin id is ", req.admin_id)
     try {
 
         const { first_name, last_name, phone_number, email, password } = req.body;

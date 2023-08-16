@@ -477,10 +477,11 @@ const showAllOrders = async (req, res) => {
 
 
 
-        const orders = await Order.findAll({
+        let orders = await Order.findAll({
             where: {
                 worker_event_id: null
-            }
+            },
+            include: Orders_drinks
         });
 
 
@@ -492,7 +493,22 @@ const showAllOrders = async (req, res) => {
         }
 
 
-        res.status(200).send(responseMessage(true, "orders are retrieved", orders));
+        let newOrders = [];
+        for(let order of orders){
+
+            order = order.toJSON();
+
+            const dateObject = new Date(order.order_date);
+            const date = dateObject.toLocaleString("en", {hour12: false});
+
+            order.order_date = date;
+
+            newOrders.push(order);
+        }
+        
+
+
+        res.status(200).send(responseMessage(true, "orders are retrieved", newOrders));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
