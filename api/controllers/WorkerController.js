@@ -518,7 +518,63 @@ const makeOrderByWorker = async (req, res) => {
 
     }
 
+}
 
+
+const deleteOrderByWorker = async (req, res) => {
+
+
+    const token = req.headers["x-access-token"];
+
+    const order_id = req.body.order_id;
+
+
+    if (!order_id) {
+        return res.status(400).send(responseMessage(false, "choose order"));
+
+
+    }
+
+
+
+    try {
+
+      
+
+        await workerAuth(token);
+
+
+
+
+        const order = await Order.findByPk(order_id);
+
+
+
+       await order.destroy();
+       
+
+
+        res.status(201).send(responseMessage(true, "order is deleted", order));
+
+
+
+    } catch (errors) {
+
+
+        await transaction.rollback();
+
+        var statusCode = errors.statusCode || 500;
+        if (errors instanceof ValidationError) {
+
+            statusCode = 400;
+
+        }
+
+        return res.status(statusCode).send(responseMessage(false, errors.message));
+
+
+
+    }
 
 }
 
@@ -533,5 +589,6 @@ module.exports = {
     approveOrder,
     retractOrder,
     makeOrderByWorker,
-    retractConfirmation
+    retractConfirmation,
+    deleteOrderByWorker
 }
