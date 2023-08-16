@@ -23,6 +23,8 @@ const makeOrder = async (req, res) => {
 
     const reservation_id = req.body.reservation_id;
     const drinks = req.body.drinks;
+    const description = req.body.description;
+
 
     if (!reservation_id) {
         return res.status(400).send(responseMessage(false, "insert reservaation_id"));
@@ -33,6 +35,7 @@ const makeOrder = async (req, res) => {
 
 
     }
+
 
     let transaction;
 
@@ -51,6 +54,7 @@ const makeOrder = async (req, res) => {
 
             order_date: Date(),
             reservation_id,
+            description
 
         }, { transaction });
 

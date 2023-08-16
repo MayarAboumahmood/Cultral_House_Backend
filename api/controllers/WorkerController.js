@@ -436,6 +436,10 @@ const makeOrderByWorker = async (req, res) => {
     const token = req.headers["x-access-token"];
 
     const drinks = req.body.drinks;
+    const description = req.body.description;
+
+
+    
 
 
     if (!drinks) {
@@ -459,6 +463,7 @@ const makeOrderByWorker = async (req, res) => {
 
             order_date: Date(),
             reservation_id: null,
+            description
 
         }, { transaction });
 
