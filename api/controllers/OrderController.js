@@ -481,7 +481,7 @@ const showAllOrders = async (req, res) => {
             where: {
                 worker_event_id: null
             },
-            include: Orders_drinks
+            include: [Reservation, Orders_drinks]
         });
 
 
