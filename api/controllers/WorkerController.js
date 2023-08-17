@@ -422,12 +422,101 @@ const retractOrder = async (req, res) => {
 }
 
 
+// const makeOrderByWorker = async (req, res) => {
+
+//     console.log("Here we are starting the Api")
+//     const token = req.headers["x-access-token"];
+
+//     const drinks = req.body.drinks;
+//     const description = req.body.description;
+
+
+//     if (!drinks) {
+//         return res.status(400).send(responseMessage(false, "insert drinks"));
+//     }
+
+//     console.log("we found the drinks")
+
+//     let transaction;
+
+//     let ord;
+//     try {
+//         console.log("we are now inside the try")
+
+//         transaction = await sequelize.transaction();
+
+//         console.log("we made the transaction")
+
+//         await workerAuth(token);
+
+//         const order = await Order.create({
+
+//             order_date: Date(),
+//             reservation_id: null,
+//             description
+
+//         }, {transaction});
+
+//         console.log("we created the order")
+
+//         const ODS = [];
+
+//         let cost = 0;
+
+//         for (let drink of drinks) {
+//             console.log("we are now inside the for loop")
+//             const {drink_id, quantity} = drink;
+
+
+//             const od = await Orders_drinks.create({
+//                 order_id: order.order_id,
+//                 drink_id,
+//                 quantity
+//             }, {transaction});
+
+
+//             const d = await Drink.findByPk(drink_id);
+
+//             cost += (quantity * d.price);
+
+//             ODS.push(od);
+
+//         }
+//         console.log("we are outside the for loop")
+
+//         await transaction.commit();
+
+//         console.log("we commited the transaction")
+
+//         ord = {order, ODS, cost};
+
+//         eventEmitter.emit('create_new_order');
+//         console.log("we emmited the new order event")
+
+//         res.status(201).send(responseMessage(true, "order is added", ord));
+
+
+//     } catch (errors) {
+
+//         console.log("we are insdide the catch")
+
+//         await transaction.rollback();
+//         console.log("we rolled back the transaction")
+
+//         let statusCode = errors.statusCode || 500;
+//         if (errors instanceof ValidationError) {
+//             statusCode = 400;
+//         }
+//         return res.status(statusCode).send(responseMessage(false, errors.message));
+//     }
+
+// }
+
 const makeOrderByWorker = async (req, res) => {
 
-    console.log("Here we are starting the Api")
     const token = req.headers["x-access-token"];
 
-    const drinks = req.body.drinks;
+    let drinks = req.body.drinks;
     const description = req.body.description;
 
 
@@ -435,17 +524,14 @@ const makeOrderByWorker = async (req, res) => {
         return res.status(400).send(responseMessage(false, "insert drinks"));
     }
 
-    console.log("we found the drinks")
 
     let transaction;
 
     let ord;
     try {
-        console.log("we are now inside the try")
 
         transaction = await sequelize.transaction();
 
-        console.log("we made the transaction")
 
         await workerAuth(token);
 
@@ -457,16 +543,18 @@ const makeOrderByWorker = async (req, res) => {
 
         }, {transaction});
 
-        console.log("we created the order")
 
         const ODS = [];
 
         let cost = 0;
 
-        for (let drink of drinks) {
-            console.log("we are now inside the for loop")
-            const {drink_id, quantity} = drink;
+         drinks = drinks.split(/[,]/);
 
+        for (let drink of drinks) {
+
+            drink = drink.split(/[:]/);
+            const drink_id = drink[0];
+            const quantity = drink[1];
 
             const od = await Orders_drinks.create({
                 order_id: order.order_id,
@@ -482,16 +570,13 @@ const makeOrderByWorker = async (req, res) => {
             ODS.push(od);
 
         }
-        console.log("we are outside the for loop")
 
         await transaction.commit();
 
-        console.log("we commited the transaction")
 
         ord = {order, ODS, cost};
 
         eventEmitter.emit('create_new_order');
-        console.log("we emmited the new order event")
 
         res.status(201).send(responseMessage(true, "order is added", ord));
 
@@ -511,7 +596,6 @@ const makeOrderByWorker = async (req, res) => {
     }
 
 }
-
 
 const deleteOrderByWorker = async (req, res) => {
 

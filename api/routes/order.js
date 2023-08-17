@@ -9,7 +9,7 @@ const orderController = require('../controllers/OrderController.js');
 
 
 
-router.put('/make-order', orderController.makeOrder);
+router.post('/make-order', orderController.makeOrder);
 router.get('/show-order', orderController.showOrderDetails);
 router.put('/update-order', orderController.updateOrder);
 router.delete('/delete-order', orderController.deleteOrder);
