@@ -21,12 +21,12 @@ const makeOrder = async (req, res) => {
     const token = req.headers["x-access-token"];
 
     const reservation_id = req.body.reservation_id;
-    const drinks = req.body.drinks;
+    let drinks = req.body.drinks;
     const description = req.body.description;
 
 
     if (!reservation_id) {
-        return res.status(400).send(responseMessage(false, "insert reservaation_id"));
+        return res.status(400).send(responseMessage(false, "insert reservation_id"));
     }
 
     if (!drinks) {
@@ -52,8 +52,13 @@ const makeOrder = async (req, res) => {
         const ODS = [];
 
         let cost = 0;
-        for ( let drink of drinks) {
-            const {drink_id, quantity} = drink;
+        drinks = drinks.split(/[,]/);
+
+        for (let drink of drinks) {
+
+            drink = drink.split(/[:]/);
+            const drink_id = drink[0];
+            const quantity = drink[1];
 
             const od = await Orders_drinks.create({
                 order_id: order.order_id,
@@ -441,7 +446,7 @@ const browseBills = async (req, res) => {
 // for admin/worker
 const showAllOrders = async (req, res) => {
 
-// need streamin to send the event_id 
+// need streaming to send the event_id? 
 
     try {
 
