@@ -391,7 +391,8 @@ const showAllEvents = async (req, res) => {
                 where: {
                     event_id
                 },
-                include: [Worker,
+                include: [
+                    Worker,
                     {
                         model: Order,
                         include: db.orders_drinks
@@ -400,23 +401,8 @@ const showAllEvents = async (req, res) => {
             });
 
 
-            const reservation_id = reservations.map(v => v.reservation_id);
-
-
-            const orders = await Order.findAll({
-                where: {
-                    [Op.or]: { reservation_id },
-
-
-                },
-                include:
-                {
-                    model: workers_events,
-                    include: Worker
-                }
-
-            });
-            const data = { event, reservations, orders };
+           
+            const data = { event, reservations };
 
             res.status(200).send(responseMessage(true, "event is sent", data));
 
