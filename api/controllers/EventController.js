@@ -376,6 +376,7 @@ const showAllEvents = async (req, res) => {
                         model: Artist_Event,
                         include: Artist
                     }
+                   
                 ]
             });
 
@@ -390,7 +391,11 @@ const showAllEvents = async (req, res) => {
                 where: {
                     event_id
                 },
-                include: Worker
+                include: [Worker,
+                    {
+                        model: Order,
+                        include: db.orders_drinks
+                    }]
 
             });
 
