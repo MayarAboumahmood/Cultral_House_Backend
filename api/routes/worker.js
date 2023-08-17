@@ -16,7 +16,7 @@ router.get('/show-worker-details/:worker_id', checkAuth.checkIfSuper, workerCont
 
 router.post('/login',checkCredentials,workerController.login);
 
-router.get('/show-reservations',workerController.showReservationsForWorker);
+router.post('/show-reservations',workerController.showReservationsForWorker);
 router.post('/confirmArrival',workerController.confirmArrival);
 router.post('/retractConfirmation',workerController.retractConfirmation);
 
