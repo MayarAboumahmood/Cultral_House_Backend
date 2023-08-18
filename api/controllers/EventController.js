@@ -6,6 +6,7 @@ const adminAuth = require("../middleware/adminAuth");
 
 const eventEmitter = require("./eventEmitter");
 
+
 const Event = db.events;
 const Artist = db.artists;
 const Artist_Event = db.artists_events
@@ -18,6 +19,7 @@ const Order = db.orders;
 const workers_events = db.workers_events;
 const Op = db.Op;
 const Worker = db.workers;
+const Drink = db.drinks;
 
 
 const createEvent = async (req, res) => {
@@ -375,6 +377,10 @@ const showAllEvents = async (req, res) => {
                     {
                         model: Artist_Event,
                         include: Artist
+                    },
+                    {
+                        model: workers_events,
+                        include: Worker
                     }
                    
                 ]
@@ -400,9 +406,41 @@ const showAllEvents = async (req, res) => {
 
             });
 
+            let bookingIncome = 0;
+            let ordersIncome = 0;
+            const ticket_price = event.ticket_price;
+
+            for(const reservation of reservations){
+
+
+                if (reservation.attendance_number != null) {
+                    bookingIncome += (reservation.attendance_number * ticket_price)
+                }
+
+                if (reservation.orders != 0) {
+
+                    for(const order of reservation.orders){
+
+                        for(const od of order.order_drinks){
+
+                            const drink = await Drink.findByPk(od.drink_id);
+
+                            if (drink != null) {
+                                ordersIncome += (od.quantity * drink.price);
+
+                            }
+                        }
+                    }
+                    
+                }
+
+
+
+
+            }
 
            
-            const data = { event, reservations };
+            const data = { event, reservations, bookingIncome, ordersIncome };
 
             res.status(200).send(responseMessage(true, "event is sent", data));
 
