@@ -416,19 +416,24 @@ const addWorkersToEvent = async (req, res) => {
     const token = req.headers["x-access-token"];
 
     const event_id = req.body.event_id;
-    const workers = req.body.workers;
+    let workers = req.body.workers;
 
 
 
     try {
         await adminAuth(token);
 
+        workers = workers.split(/[,]/);
+
+       
 
 
+        for (let worker of workers) {
 
-        for (const worker of workers) {
+            worker = worker.split(/[:]/);
+            const worker_id = worker[0];
+            const cost = worker[1];
 
-            const { worker_id, cost } = worker;
             await workers_events.create({
                 event_id,
                 worker_id,
