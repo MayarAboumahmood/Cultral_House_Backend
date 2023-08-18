@@ -401,7 +401,10 @@ const showAllEvents = async (req, res) => {
                     Worker,
                     {
                         model: Order,
-                        include: db.orders_drinks
+                        include: {
+                           model: db.orders_drinks,
+                           include:Drink
+                        }
                     }]
 
             });
