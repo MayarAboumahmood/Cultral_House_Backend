@@ -247,11 +247,11 @@ const showAllEvents = async (req, res) => {
 
         event.begin_date = date;
 
-        if (currentDate < eventDate) {
+        if (currentDate >eventDate) {
 
             upComing.push(event);
 
-        } else if (currentDate > eventDate) {
+        } else if (currentDate < eventDate) {
 
             past.push(event);
         } else {
