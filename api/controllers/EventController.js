@@ -6,6 +6,7 @@ const adminAuth = require("../middleware/adminAuth");
 
 const eventEmitter = require("./eventEmitter");
 
+
 const Event = db.events;
 const Artist = db.artists;
 const Artist_Event = db.artists_events
@@ -18,6 +19,7 @@ const Order = db.orders;
 const workers_events = db.workers_events;
 const Op = db.Op;
 const Worker = db.workers;
+const Drink = db.drinks;
 
 
 const createEvent = async (req, res) => {
@@ -60,9 +62,9 @@ const createEvent = async (req, res) => {
             artists_cost
         };
 
-        const event = await Event.create(data, {transaction});
+        const event = await Event.create(data, { transaction });
 
-        
+
         const artists_ids = artists.split(',').map(id => id.trim());
         for (const artist_id of artists_ids) {
             const artist = await Artist.findByPk(artist_id)
@@ -72,7 +74,7 @@ const createEvent = async (req, res) => {
             await Artist_Event.create({
                 artist_id: artist_id,
                 event_id: event.event_id,
-            }, {transaction})
+            }, { transaction })
 
         }
 
@@ -81,7 +83,7 @@ const createEvent = async (req, res) => {
                 await Photos.create({
                     event_id: event.event_id,
                     picture: req.files[i].path
-                }, {transaction})
+                }, { transaction })
             }
         }
 
@@ -172,7 +174,7 @@ const updateEvent = async (req, res) => {
 
     if (event != null) {
         const old_event = event;
-        const {title, description, ticket_price, available_places, begin_date, band_name} = req.body
+        const { title, description, ticket_price, available_places, begin_date, band_name } = req.body
         if (title != null)
             event.title = title
         if (description != null)
@@ -192,7 +194,7 @@ const updateEvent = async (req, res) => {
                 admin_id: admin_id,
                 action: "Editing Event",
                 time: Date.now(),
-                details: {"new event": event, "old event": old_event}
+                details: { "new event": event, "old event": old_event }
             })
 
             await event.save();
@@ -210,7 +212,7 @@ const updateEvent = async (req, res) => {
 
 
     } else {
-        return res.status(404).json({msg: "event not found"})
+        return res.status(404).json({ msg: "event not found" })
     }
 
 
@@ -219,188 +221,280 @@ const updateEvent = async (req, res) => {
 
 const showAllEvents = async (req, res) => {
 
-    var events = await Event.findAll({include: Photos});
+    var events = await Event.findAll({ include: Photos });
     const past = [];
     const upComing = [];
     const now = [];
 
     const eventDurstionInHours = 4;
-    const ctDate = new Date().toLocaleString("en", {hour12: false});
+    const ctDate = new Date().toLocaleString("en", { hour12: false });
 
     const currentDateArray = ctDate.split(/[,:]/);
 
-    const currentDate = currentDateArray[0];
+    const currentDate = currentDateArray[0].split(/[/]/);
     const currentHours = currentDateArray[1];
     const currentMinutes = currentDateArray[2];
 
+
+    const currentYear = currentDate[2];
+    const currentMonth = currentDate[0];
+    const currentDay = currentDate[1];
 
     //2023-08-07 15:00
     for (let index = 0; index < events.length; index++) {
         var event = events[index].toJSON();
         const dateObject = new Date(event.begin_date);
-        const date = dateObject.toLocaleString("en", {hour12: false});
+        const date = dateObject.toLocaleString("en", { hour12: false });
         const dateArray = date.split(/[,:]/);
 
-        const eventDate = dateArray[0];
+        const eventDate = dateArray[0].split(/[/]/);
         const eventHours = dateArray[1];
         const eventMinutes = dateArray[2];
 
+        const eventYear = eventDate[2];
+        const eventMonth = eventDate[0];
+        const eventDay = eventDate[1];
+
         event.begin_date = date;
 
-        if (currentDate >eventDate) {
+
+        if (Number(currentYear) < Number(eventYear)) {
 
             upComing.push(event);
 
-        } else if (currentDate < eventDate) {
+        } else if (currentYear > eventYear) {
 
             past.push(event);
         } else {
 
-            const eventDurationInMinutes = eventDurstionInHours * 60;
+            if (Number(currentMonth) < Number(eventMonth)) {
 
-            const currentTimeInMinutes = currentHours * 60 + Number(currentMinutes);
+            
 
-            const eventTimeInMinutes = eventHours * 60 + Number(eventMinutes);
-
-            const eventEndTimeInMinutes = eventTimeInMinutes + Number(eventDurationInMinutes);
-
-
-            if (currentTimeInMinutes < eventTimeInMinutes) {
                 upComing.push(event);
-            } else if (currentTimeInMinutes >= eventEndTimeInMinutes) {
-                past.push(event);
-            } else {
-                now.push(event);
             }
+            else if (Number(currentMonth) > Number(eventMonth)) {
+             
+
+                past.push(event);
+
+            }
+            else{
+                if (Number(currentDay) < Number(eventDay)) {
+                    upComing.push(event)
+                }
+                else if (Number(currentDay) > Number(eventDay)) {
+                    past.push(event);
+                }
+
+                else {
+                    const eventDurationInMinutes = eventDurstionInHours * 60;
+
+                    const currentTimeInMinutes = currentHours * 60 + Number(currentMinutes);
+
+                    const eventTimeInMinutes = eventHours * 60 + Number(eventMinutes);
+
+                    const eventEndTimeInMinutes = eventTimeInMinutes + Number(eventDurationInMinutes);
+
+
+                    if (Number(currentTimeInMinutes) < Number(eventTimeInMinutes)) {
+                        upComing.push(event);
+                    } else if (Number(currentTimeInMinutes) >= Number(eventEndTimeInMinutes)) {
+                        past.push(event);
+                    } else {
+                        now.push(event);
+                    }
+                } 
+
+            }
+       
         }
 
+        }
+
+        events = { past, now, upComing };
+        res.status(200).json({
+            msg: "events has been sent successfully",
+            data: events
+        })
     }
 
-    events = {past, now, upComing};
-    res.status(200).json({
-        msg: "events has been sent successfully",
-        data: events
-    })
-}
+
+    const showEventDetailsForCustomer = async (req, res) => {
 
 
-const showEventDetailsForCustomer = async (req, res) => {
+        const event_id = req.body.event_id;
 
 
-    const event_id = req.body.event_id;
+        try {
 
+            let event = await Event.findOne({
+                where: { event_id }, include: [
+                    Photos,
+                    {
+                        model: Artist_Event,
+                        include: Artist
+                    }
+                ]
+            });
 
-    try {
-
-        let event = await Event.findOne({where: {event_id}, include: [
-            Photos,
-            {
-                model: Artist_Event,
-                include: Artist
-            }
-        ]});
-
-             event = event.toJSON();
+            event = event.toJSON();
 
             const dateObject = new Date(event.begin_date);
-            const date = dateObject.toLocaleString("en", {hour12: false});
-        
+            const date = dateObject.toLocaleString("en", { hour12: false });
+
             event.begin_date = date;
 
 
-        res.status(200).send(responseMessage(true, "event is sent", event));
+            res.status(200).send(responseMessage(true, "event is sent", event));
 
-    } catch (errors) {
+        } catch (errors) {
 
 
-        var statusCode = errors.statusCode || 500;
-        if (errors instanceof ValidationError) {
+            var statusCode = errors.statusCode || 500;
+            if (errors instanceof ValidationError) {
 
-            statusCode = 400;
+                statusCode = 400;
 
+            }
+
+            return res.status(statusCode).send(responseMessage(false, errors.message));
         }
 
-        return res.status(statusCode).send(responseMessage(false, errors.message));
+
     }
 
-
-}
-
-const showEventDetailsForAdmin = async (req, res) => {
+    const showEventDetailsForAdmin = async (req, res) => {
 
 
-    const event_id = req.body.event_id;
+        const event_id = req.body.event_id;
 
 
-    try {
+        try {
 
-        let event = await Event.findOne({where: {event_id}, include: [
-            Photos,
-            {
-                model: Artist_Event,
-                include: Artist
-            }
-        ]});
+            let event = await Event.findOne({
+                where: { event_id }, include: [
+                    Photos,
+                    {
+                        model: Artist_Event,
+                        include: Artist
+                    },
+                    {
+                        model: workers_events,
+                        include: Worker
+                    }
+                   
+                ]
+            });
 
-        event = event.toJSON();
+            event = event.toJSON();
 
-        const dateObject = new Date(event.begin_date);
-        const date = dateObject.toLocaleString("en", {hour12: false});
-    
-        event.begin_date = date;
+            const dateObject = new Date(event.begin_date);
+            const date = dateObject.toLocaleString("en", { hour12: false });
 
-        const reservations = await Reservation.findAll({
-            where: {
-                event_id
-            },
-            include: Worker
+            event.begin_date = date;
 
-        });
+            const reservations = await Reservation.findAll({
+                where: {
+                    event_id
+                },
+                include: [
+                    Worker,
+                    {
+                        model: Order,
+                        include: {
+                           model: db.orders_drinks,
+                           include:Drink
+                        }
+                    }]
+
+            });
+
+            let bookingIncome = 0;
+            let ordersIncome = 0;
+            const ticket_price = event.ticket_price;
+
+            for(const reservation of reservations){
 
 
-        const reservation_id = reservations.map(v => v.reservation_id);
-
-
-        const orders = await Order.findAll({
-            where: {
-                [Op.or]: {reservation_id},
-
-
-            },
-            include:
-                {
-                    model: workers_events,
-                    include: Worker
+                if (reservation.attendance_number != null) {
+                    bookingIncome += (reservation.attendance_number * ticket_price)
                 }
 
-        });
-        const data = {event, reservations, orders};
+                if (reservation.orders != 0) {
 
-        res.status(200).send(responseMessage(true, "event is sent", data));
+                    for(const order of reservation.orders){
 
-    } catch (errors) {
+                        for(const od of order.order_drinks){
+
+                            const drink = await Drink.findByPk(od.drink_id);
+
+                            if (drink != null) {
+                                ordersIncome += (od.quantity * drink.price);
+
+                            }
+                        }
+                    }
+                    
+                }
 
 
-        var statusCode = errors.statusCode || 500;
-        if (errors instanceof ValidationError) {
 
-            statusCode = 400;
 
+            }
+
+           
+            const data = { event, reservations, bookingIncome, ordersIncome };
+
+            res.status(200).send(responseMessage(true, "event is sent", data));
+
+        } catch (errors) {
+
+
+            var statusCode = errors.statusCode || 500;
+            if (errors instanceof ValidationError) {
+
+                statusCode = 400;
+
+            }
+
+            return res.status(statusCode).send(responseMessage(false, errors.message));
         }
 
-        return res.status(statusCode).send(responseMessage(false, errors.message));
+
     }
 
+/*  if (currentDay < eventDay) {
+                    upComing.push(event)
+                }
+                else if (currentDay > eventDay) {
+                    past.push(event);
+                }
 
-}
+                else {
+                    const eventDurationInMinutes = eventDurstionInHours * 60;
+
+                    const currentTimeInMinutes = currentHours * 60 + Number(currentMinutes);
+
+                    const eventTimeInMinutes = eventHours * 60 + Number(eventMinutes);
+
+                    const eventEndTimeInMinutes = eventTimeInMinutes + Number(eventDurationInMinutes);
 
 
-module.exports = {
-    createEvent,
-    showAllEvents,
-    deleteEvent,
-    updateEvent,
-    showEventDetailsForCustomer,
-    showEventDetailsForAdmin
+                    if (currentTimeInMinutes < eventTimeInMinutes) {
+                        upComing.push(event);
+                    } else if (currentTimeInMinutes >= eventEndTimeInMinutes) {
+                        past.push(event);
+                    } else {
+                        now.push(event);
+                    }
+                } */
+    module.exports = {
+        createEvent,
+        showAllEvents,
+        deleteEvent,
+        updateEvent,
+        showEventDetailsForCustomer,
+        showEventDetailsForAdmin
 
-}
+    }

@@ -1,5 +1,5 @@
 const db = require("../Models/index");
-const { unlinkSync } = require('fs');
+const {unlinkSync} = require('fs');
 const workerAuth = require("../middleware/workerAuth");
 const responseMessage = require("../middleware/responseHandler");
 const RError = require("../middleware/error.js");
@@ -24,12 +24,10 @@ const sequelize = db.sequelize;
 const ValidationError = db.ValidationError;
 
 
-
 const createWorker = async (req, res) => {
-    console.log("admin id is ", req.admin_id)
     try {
 
-        const { first_name, last_name, phone_number, email, password } = req.body;
+        const {first_name, last_name, phone_number, email, password} = req.body;
 
         const data = {
             first_name,
@@ -72,8 +70,7 @@ const createWorker = async (req, res) => {
 
 const login = async (req, res) => {
 
-    const { email, phone_number, password } = req.body;
-
+    const {email, phone_number, password} = req.body;
 
 
     try {
@@ -81,10 +78,10 @@ const login = async (req, res) => {
         let worker = null;
 
         if (email) {
-            worker = await Worker.findOne({ where: { email } });
+            worker = await Worker.findOne({where: {email}});
 
         } else {
-            worker = await Worker.findOne({ where: { phone_number } });
+            worker = await Worker.findOne({where: {phone_number}});
 
         }
 
@@ -100,11 +97,10 @@ const login = async (req, res) => {
 
                 throw new RError(401, "wrong credentials");
             } else {
-                const { worker_id, first_name } = worker;
+                const {worker_id, first_name} = worker;
 
-                const token = jwt.sign({ worker_id, first_name }, process.env.SECRET, { expiresIn: '3d' });
+                const token = jwt.sign({worker_id, first_name}, process.env.SECRET, {expiresIn: '3d'});
                 res.status(200).send(responseMessage(true, "token is generated", token, "token"));
-
 
 
             }
@@ -174,7 +170,7 @@ const showWorkerDetails = async (req, res) => {
     const worker_id = req.params.worker_id;
 
     const worker = await Worker.findOne({
-        where: { worker_id }
+        where: {worker_id}
     })
 
     const we = await workers_events.findAll({
@@ -189,11 +185,11 @@ const showWorkerDetails = async (req, res) => {
 
         const events = await Event.findAll({
             where: {
-                [Op.or]: { event_id },
+                [Op.or]: {event_id},
             },
         });
 
-        const data = { worker, events };
+        const data = {worker, events};
         res.status(200).json({
             msg: "worker has been sent successfully",
             data: data
@@ -206,20 +202,33 @@ const showReservationsForWorker = async (req, res) => {
 
 
     const token = req.headers["x-access-token"];
+    const event_id = req.body.event_id;
 
     try {
         await workerAuth(token);
 
 
-        const reservations = await Reservation.findAll({ where: { attendance: false } });
+        const reservations = await Reservation.findAll({where: {event_id}});
 
         if (reservations.length === 0) {
             throw new RError(404, "no reservations found");
-
-
         }
 
-        res.status(200).send(responseMessage(true, "reservations have been retrieved successfully", reservations));
+        let hasCome = [];
+        let notCome = [];
+
+        for (const reservation of reservations) {
+
+            if (reservation.attendance == true) {
+                hasCome.push(reservation);
+            } else {
+                notCome.push(reservation);
+
+            }
+        }
+        const ress = {notCome, hasCome};
+
+        res.status(200).send(responseMessage(true, "reservations have been retrieved successfully", ress));
 
     } catch (error) {
 
@@ -238,14 +247,13 @@ const confirmArrival = async (req, res) => {
     const attendance_number = req.body.attendance_number;
 
 
-
     try {
 
         const worker = await workerAuth(token);
 
         const worker_id = worker.worker_id;
 
-        const reservation = await Reservation.findOne({ where: { reservation_id } });
+        const reservation = await Reservation.findOne({where: {reservation_id}});
 
         reservation.attendance = true;
         reservation.attendance_number = attendance_number;
@@ -256,7 +264,7 @@ const confirmArrival = async (req, res) => {
             const diff = reservation.number_of_places - attendance_number;
 
 
-            const event = await Event.findOne({ where: { event_id: reservation.event_id } });
+            const event = await Event.findOne({where: {event_id: reservation.event_id}});
 
             event.available_places += diff;
 
@@ -268,7 +276,7 @@ const confirmArrival = async (req, res) => {
 
 
         const customer_id = reservation.customer_id;
-        
+
         eventEmitter.emit('sendID', customer_id, reservation_id);
         res.status(200).send(responseMessage(true, "reservations have been approved successfully", reservation));
 
@@ -278,14 +286,60 @@ const confirmArrival = async (req, res) => {
         return res.status(statusCode).send(responseMessage(false, error.message));
 
 
+    }
+
+}
+
+
+const retractConfirmation = async (req, res) => {
+
+    const token = req.headers["x-access-token"];
+
+    const reservation_id = req.body.reservation_id;
+
+
+    try {
+
+        const worker = await workerAuth(token);
+
+
+        const reservation = await Reservation.findOne({where: {reservation_id}});
+
+        if (reservation.attendance_number != reservation.number_of_places) {
+
+            const diff = reservation.number_of_places - attendance_number;
+
+
+            const event = await Event.findOne({where: {event_id: reservation.event_id}});
+
+            event.available_places -= diff;
+
+            event.save();
+
+        }
+
+        reservation.attendance = false;
+        reservation.attendance_number = null;
+        reservation.worker_id = null;
+
+
+        reservation.save();
+
+        res.status(200).send(responseMessage(true, "reservations have been approved successfully", reservation));
+
+    } catch (error) {
+
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).send(responseMessage(false, error.message));
+
 
     }
 
 }
 
 
-const approveOrder = async (req, res)=>{
-  
+const approveOrder = async (req, res) => {
+
     const token = req.headers["x-access-token"];
 
     const order_id = req.body.order_id;
@@ -294,43 +348,45 @@ const approveOrder = async (req, res)=>{
 
 
         const worker = await workerAuth(token);
-  
+
         const worker_id = worker.worker_id;
 
         const order = await Order.findByPk(order_id)
 
 
         if (order == null) {
-                
+
             throw new RError(404, "order not found");
 
 
         }
-       
+
 
         const reservation = await Reservation.findByPk(order.reservation_id);
 
-        const wo = await workers_events.findOne({where:{
-            worker_id,
-            event_id:reservation.event_id
+        const wo = await workers_events.findOne({
+            where: {
+                worker_id,
+                event_id: reservation.event_id
 
-        }})
+            }
+        })
 
         order.worker_event_id = wo.worker_event_id;
         order.save();
-        
-        res.status(200).send(responseMessage(true, "order has been approved", order));        
+
+        res.status(200).send(responseMessage(true, "order has been approved", order));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-        
+
     }
 
 }
 
-const retractOrder = async (req, res)=>{
-  
+const retractOrder = async (req, res) => {
+
     const token = req.headers["x-access-token"];
 
     const order_id = req.body.order_id;
@@ -338,83 +394,85 @@ const retractOrder = async (req, res)=>{
     try {
 
 
-         await workerAuth(token);
-  
+        await workerAuth(token);
+
 
         const order = await Order.findByPk(order_id)
 
 
         if (order == null) {
-                
+
             throw new RError(404, "order not found");
 
 
         }
-       
+
 
         order.worker_event_id = null;
         order.save();
-        
-        res.status(200).send(responseMessage(true, "order has been retracted", order));        
+
+        res.status(200).send(responseMessage(true, "order has been retracted", order));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-        
+
     }
 
 }
 
 
-const makeOrderByWorker = async (req, res) => {
 
+
+const makeOrderByWorker = async (req, res) => {
 
     const token = req.headers["x-access-token"];
 
-    const drinks = req.body.drinks;
+    let drinks = req.body.drinks;
+    const description = req.body.description;
 
 
     if (!drinks) {
         return res.status(400).send(responseMessage(false, "insert drinks"));
-
-
     }
+
 
     let transaction;
 
+    let ord;
     try {
 
         transaction = await sequelize.transaction();
 
+
         await workerAuth(token);
-
-
-
 
         const order = await Order.create({
 
             order_date: Date(),
             reservation_id: null,
+            description
 
-        }, { transaction });
-
+        }, {transaction});
 
 
         const ODS = [];
 
         let cost = 0;
-        for (const drink of drinks) {
-            const { drink_id, quantity } = drink;
 
+         drinks = drinks.split(/[,]/);
+
+        for (let drink of drinks) {
+
+            drink = drink.split(/[:]/);
+            const drink_id = drink[0];
+            const quantity = drink[1];
 
             const od = await Orders_drinks.create({
                 order_id: order.order_id,
-
                 drink_id,
-
                 quantity
-
-            }, { transaction });
+            }, {transaction});
 
 
             const d = await Drink.findByPk(drink_id);
@@ -427,13 +485,56 @@ const makeOrderByWorker = async (req, res) => {
 
         await transaction.commit();
 
-        ord = { order, ODS, cost };
 
+        ord = {order, ODS, cost};
 
         eventEmitter.emit('create_new_order');
 
         res.status(201).send(responseMessage(true, "order is added", ord));
 
+
+    } catch (errors) {
+
+
+        await transaction.rollback();
+
+        let statusCode = errors.statusCode || 500;
+        if (errors instanceof ValidationError) {
+            statusCode = 400;
+        }
+        return res.status(statusCode).send(responseMessage(false, errors.message));
+    }
+
+}
+
+const deleteOrderByWorker = async (req, res) => {
+
+
+    const token = req.headers["x-access-token"];
+
+    const order_id = req.body.order_id;
+
+
+    if (!order_id) {
+        return res.status(400).send(responseMessage(false, "choose order"));
+
+
+    }
+
+
+    try {
+
+
+        await workerAuth(token);
+
+
+        const order = await Order.findByPk(order_id);
+
+
+        await order.destroy();
+
+
+        res.status(201).send(responseMessage(true, "order is deleted", order));
 
 
     } catch (errors) {
@@ -451,10 +552,7 @@ const makeOrderByWorker = async (req, res) => {
         return res.status(statusCode).send(responseMessage(false, errors.message));
 
 
-
     }
-
-
 
 }
 
@@ -468,5 +566,7 @@ module.exports = {
     confirmArrival,
     approveOrder,
     retractOrder,
-    makeOrderByWorker
+    makeOrderByWorker,
+    retractConfirmation,
+    deleteOrderByWorker
 }

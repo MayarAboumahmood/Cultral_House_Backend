@@ -16,13 +16,17 @@ router.get('/show-worker-details/:worker_id', checkAuth.checkIfSuper, workerCont
 
 router.post('/login',checkCredentials,workerController.login);
 
-router.get('/show-reservations',workerController.showReservationsForWorker);
+router.post('/show-reservations',workerController.showReservationsForWorker);
 router.post('/confirmArrival',workerController.confirmArrival);
+router.post('/retractConfirmation',workerController.retractConfirmation);
+
 
 router.post('/approveOrder',workerController.approveOrder);
 
 router.post('/retractOrder', workerController.retractOrder)
 
 router.post('/makeOrderByWorker', workerController.makeOrderByWorker);
+router.post('/deleteOrderByWorker', workerController.deleteOrderByWorker);
+
 
 module.exports = router

@@ -23,6 +23,7 @@ router.get('/show-reservations',  checkAuth.checkIfSuper, adminController.showRe
 router.get('/stats', adminController.stats)
 router.post('/addWorkersToEvent', adminController.addWorkersToEvent)
 
+router.post('/getActions', checkAuth.checkIfSuper, adminController.getActions)
 
 
 module.exports = router;

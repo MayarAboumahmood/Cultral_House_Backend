@@ -100,6 +100,24 @@ app.use("/notificationsForOrders", (_, res) => {
 
 });
 
+
+
+app.use("/sendEventID", (_, res) => {
+
+
+    //for showing reservations and orders for WORKER
+    SSEConfig(res);
+
+    eventEmitter.on('send_event_id', (event_id) => {
+
+        res.status(200).write(`data: event_id is ${event_id}\n\n`);
+
+
+    });
+
+
+});
+
 app.use("/resIdToUser/:id", (req, res) => {
 
     SSEConfig(res);

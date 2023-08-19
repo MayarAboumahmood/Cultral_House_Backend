@@ -15,24 +15,24 @@ const Drink = db.drinks;
 const ValidationError = db.ValidationError;
 
 
-
 const makeOrder = async (req, res) => {
 
 
     const token = req.headers["x-access-token"];
 
     const reservation_id = req.body.reservation_id;
-    const drinks = req.body.drinks;
+    let drinks = req.body.drinks;
+    const description = req.body.description;
+
 
     if (!reservation_id) {
-        return res.status(400).send(responseMessage(false, "insert reservaation_id"));
-
+        return res.status(400).send(responseMessage(false, "insert reservation_id"));
     }
+
     if (!drinks) {
         return res.status(400).send(responseMessage(false, "insert drinks"));
-
-
     }
+
 
     let transaction;
 
@@ -40,28 +40,25 @@ const makeOrder = async (req, res) => {
 
         transaction = await sequelize.transaction();
 
-
         await customerAuth(token);
-
-
-
-
 
         const order = await Order.create({
 
-            order_date: Date(),
-            reservation_id,
+            order_date: Date(), reservation_id, description
 
-        }, { transaction });
-
+        }, {transaction});
 
 
         const ODS = [];
 
         let cost = 0;
-        for (const drink of drinks) {
-            const { drink_id, quantity } = drink;
+        drinks = drinks.split(/[,]/);
 
+        for (let drink of drinks) {
+
+            drink = drink.split(/[:]/);
+            const drink_id = drink[0];
+            const quantity = drink[1];
 
             const od = await Orders_drinks.create({
                 order_id: order.order_id,
@@ -70,7 +67,7 @@ const makeOrder = async (req, res) => {
 
                 quantity
 
-            }, { transaction });
+            }, {transaction});
 
 
             const d = await Drink.findByPk(drink_id);
@@ -83,7 +80,7 @@ const makeOrder = async (req, res) => {
 
         await transaction.commit();
 
-        ord = { order, ODS, cost };
+        let ord = {order, ODS, cost};
 
 
         eventEmitter.emit('create_new_order');
@@ -91,13 +88,12 @@ const makeOrder = async (req, res) => {
         res.status(201).send(responseMessage(true, "order is added", ord));
 
 
-
     } catch (errors) {
 
 
         await transaction.rollback();
 
-        var statusCode = errors.statusCode || 500;
+        let statusCode = errors.statusCode || 500;
         if (errors instanceof ValidationError) {
 
             statusCode = 400;
@@ -107,9 +103,7 @@ const makeOrder = async (req, res) => {
         return res.status(statusCode).send(responseMessage(false, errors.message));
 
 
-
     }
-
 
 
 }
@@ -151,17 +145,12 @@ const showOrderDetails = async (req, res) => {
         const check = reservation.customer_id === customer_id;
 
 
-
         if (!check) {
             throw new RError(401, "not allowed");
 
         }
 
-        const ODS = await Orders_drinks.findAll({ where: { order_id } });
-
-
-
-
+        const ODS = await Orders_drinks.findAll({where: {order_id}});
 
 
         let cost = 0;
@@ -176,14 +165,13 @@ const showOrderDetails = async (req, res) => {
         }
 
 
-        ord = { order, ODS, cost };
+        ord = {order, ODS, cost};
         res.status(200).send(responseMessage(true, "order is retrieved", ord));
     } catch (error) {
 
 
         const statusCode = error.statusCode || 500;
         return res.status(statusCode).send(responseMessage(false, error.message));
-
 
     }
 
@@ -221,23 +209,21 @@ const updateOrder = async (req, res) => {
         await customerAuth(token);
 
 
-
-        const oldODS = await Orders_drinks.findAll({ where: { order_id } });
+        const oldODS = await Orders_drinks.findAll({where: {order_id}});
 
         transaction = await sequelize.transaction();
 
 
         for (od of oldODS) {
 
-            await od.destroy({ transaction });
+            await od.destroy({transaction});
         }
-
 
 
         const ODS = [];
 
         for (const drink of drinks) {
-            const { drink_id, quantity } = drink;
+            const {drink_id, quantity} = drink;
 
 
             const od = await Orders_drinks.create({
@@ -247,7 +233,7 @@ const updateOrder = async (req, res) => {
 
                 quantity
 
-            }, { transaction });
+            }, {transaction});
 
 
             ODS.push(od);
@@ -271,7 +257,6 @@ const updateOrder = async (req, res) => {
 const deleteOrder = async (req, res) => {
 
 
-
     const token = req.headers["x-access-token"];
 
     const order_id = req.body.order_id;
@@ -290,7 +275,6 @@ const deleteOrder = async (req, res) => {
         const customer = await customerAuth(token);
 
         const customer_id = customer.customer_id;
-
 
 
         const order = await Order.findByPk(order_id);
@@ -322,7 +306,6 @@ const deleteOrder = async (req, res) => {
     }
 
 
-
 }
 
 
@@ -334,14 +317,12 @@ const showOrders = async (req, res) => {
     try {
 
 
-
-
         const customer = await customerAuth(token);
 
         const customer_id = customer.customer_id;
 
 
-        const reservations = await Reservation.findAll({ where: { customer_id } });
+        const reservations = await Reservation.findAll({where: {customer_id}});
 
         const reservation_id = reservations.map(v => v.reservation_id);
 
@@ -349,7 +330,7 @@ const showOrders = async (req, res) => {
 
         const orders = await Order.findAll({
             where: {
-                [Op.or]: { reservation_id }
+                [Op.or]: {reservation_id}
             }
         });
 
@@ -383,14 +364,14 @@ const browseBills = async (req, res) => {
 
         const customer_id = customer.customer_id;
 
-        const reservations = await Reservation.findAll({ where: { customer_id } });
+        const reservations = await Reservation.findAll({where: {customer_id}});
 
         let result = [];
         let temp;
 
         for (const resrvation of reservations) {
             temp = [];
-            const { reservation_id } = resrvation;
+            const {reservation_id} = resrvation;
             const orders = await Order.findAll({
                 where: {
                     reservation_id
@@ -407,7 +388,7 @@ const browseBills = async (req, res) => {
             const order_id = orders.map(v => v.order_id);
             const ODS = await Orders_drinks.findAll({
                 where: {
-                    [Op.or]: { order_id }
+                    [Op.or]: {order_id}
                 }
             });
 
@@ -415,7 +396,7 @@ const browseBills = async (req, res) => {
 
             const drinks = await Drink.findAll({
                 where: {
-                    [Op.or]: { drink_id }
+                    [Op.or]: {drink_id}
                 }
             });
 
@@ -423,20 +404,17 @@ const browseBills = async (req, res) => {
             let t = 0;
 
             for (const drink of drinks) {
-                const { title, price, drink_id } = drink;
+                const {title, price, drink_id} = drink;
 
                 for (let index = 0; index < ODS.length; index++) {
 
                     if (ODS[index].drink_id === drink_id) {
 
-                        const { quantity } = ODS[index];
+                        const {quantity} = ODS[index];
 
                         const v = price * quantity;
                         const obj = {
-                            drink: title,
-                            price: price,
-                            quantity: quantity,
-                            total: v
+                            drink: title, price: price, quantity: quantity, total: v
                         }
 
                         t += v;
@@ -447,16 +425,12 @@ const browseBills = async (req, res) => {
                 }
 
 
-
             }
-            temp.push({ totalAmount: t })
+            temp.push({totalAmount: t})
             result.push(temp);
 
 
         }
-
-
-
 
 
         res.status(200).send(responseMessage(true, "bills are retrieved", result));
@@ -472,15 +446,19 @@ const browseBills = async (req, res) => {
 // for admin/worker
 const showAllOrders = async (req, res) => {
 
+// need streaming to send the event_id? 
 
     try {
 
 
+        let orders = await Order.findAll({
+            where: {worker_event_id: null}, include: [Reservation, {
+                model: Orders_drinks,
 
-        const orders = await Order.findAll({
-            where: {
-                worker_event_id: null
+                include: Drink
             }
+
+            ]
         });
 
 
@@ -492,7 +470,21 @@ const showAllOrders = async (req, res) => {
         }
 
 
-        res.status(200).send(responseMessage(true, "orders are retrieved", orders));
+        let newOrders = [];
+        for (let order of orders) {
+
+            order = order.toJSON();
+
+            const dateObject = new Date(order.order_date);
+            const date = dateObject.toLocaleString("en", {hour12: false});
+
+            order.order_date = date;
+
+            newOrders.push(order);
+        }
+
+
+        res.status(200).send(responseMessage(true, "orders are retrieved", newOrders));
     } catch (error) {
 
         const statusCode = error.statusCode || 500;
@@ -503,7 +495,6 @@ const showAllOrders = async (req, res) => {
 }
 
 module.exports = {
-    makeOrder, showOrderDetails, updateOrder,
-    deleteOrder, showOrders, browseBills, showAllOrders
+    makeOrder, showOrderDetails, updateOrder, deleteOrder, showOrders, browseBills, showAllOrders
 };
 
